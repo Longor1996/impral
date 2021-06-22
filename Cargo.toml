@@ -5,5 +5,9 @@ authors = ["Longor1996 <lalongok@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-tagged-box = "0.1.1"
 smallvec = "1.6.1"
+
+[dependencies.tagged-box]
+version = "0.1.1"
+default-features = false
+features = ["57bits"]
