@@ -19,35 +19,13 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
             };
         };
         
-        match current {
-            '(' => return Some((index, Symbol::ParenLeft).into()),
-            ')' => return Some((index, Symbol::ParenRight).into()),
-            '[' => return Some((index, Symbol::BraketLeft).into()),
-            ']' => return Some((index, Symbol::BraketRight).into()),
-            '{' => return Some((index, Symbol::CurlyLeft).into()),
-            '}' => return Some((index, Symbol::CurlyRight).into()),
-            '<' => return Some((index, Symbol::AngleLeft).into()),
-            '>' => return Some((index, Symbol::AngleRight).into()),
-            //'+' => return Some((index, Symbol::Plus).into()), // HANDLED ELSEWHERE
-            //'-' => return Some((index, Symbol::Dash).into()), // HANDLED ELSEWHERE
-            '*' => return Some((index, Symbol::Star).into()),
-            '/' => return Some((index, Symbol::Slash).into()),
-            '~' => return Some((index, Symbol::Tilde).into()),
-            '#' => return Some((index, Symbol::Hash).into()),
-            ',' => return Some((index, Symbol::Comma).into()),
-            '.' => return Some((index, Symbol::Dot).into()),
-            ':' => return Some((index, Symbol::DoubleDot).into()),
-            ';' => return Some((index, Symbol::Semicolon).into()),
-            '_' => return Some((index, Symbol::Underscore).into()),
-            '=' => return Some((index, Symbol::EqualSign).into()),
-            '?' => return Some((index, Symbol::QuestionMark).into()),
-            '!' => return Some((index, Symbol::ExclamationMark).into()),
-            '$' => return Some((index, Symbol::DollarSign).into()),
-            '%' => return Some((index, Symbol::Percentage).into()),
-            '&' => return Some((index, Symbol::Ampersand).into()),
-            '|' => return Some((index, Symbol::Pipe).into()),
-            '^' => return Some((index, Symbol::Caret).into()),
-            _ => () // continue on...
+        // Check for individual symbols...
+        if let Ok(symbol) = Symbol::try_from(current) {
+            // '+' and '-' are handled elsewhere...
+            if ! (symbol == Symbol::Plus || symbol == Symbol::Dash) {
+                // ...everything else is immediately turned into a token.
+                return Some((index, symbol).into());
+            }
         }
         
         // Check for start of bareword...
@@ -378,6 +356,42 @@ impl std::fmt::Debug for Symbol {
     }
 }
 
+impl TryFrom<char> for Symbol {
+    type Error = ();
+
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        match value {
+            '(' => Ok(Symbol::ParenLeft),
+            ')' => Ok(Symbol::ParenRight),
+            '[' => Ok(Symbol::BraketLeft),
+            ']' => Ok(Symbol::BraketRight),
+            '{' => Ok(Symbol::CurlyLeft),
+            '}' => Ok(Symbol::CurlyRight),
+            '<' => Ok(Symbol::AngleLeft),
+            '>' => Ok(Symbol::AngleRight),
+            '+' => Ok(Symbol::Plus),
+            '-' => Ok(Symbol::Dash),
+            '*' => Ok(Symbol::Star),
+            '/' => Ok(Symbol::Slash),
+            '~' => Ok(Symbol::Tilde),
+            '#' => Ok(Symbol::Hash),
+            ',' => Ok(Symbol::Comma),
+            '.' => Ok(Symbol::Dot),
+            ':' => Ok(Symbol::DoubleDot),
+            ';' => Ok(Symbol::Semicolon),
+            '_' => Ok(Symbol::Underscore),
+            '=' => Ok(Symbol::EqualSign),
+            '?' => Ok(Symbol::QuestionMark),
+            '!' => Ok(Symbol::ExclamationMark),
+            '$' => Ok(Symbol::DollarSign),
+            '%' => Ok(Symbol::Percentage),
+            '&' => Ok(Symbol::Ampersand),
+            '|' => Ok(Symbol::Pipe),
+            '^' => Ok(Symbol::Caret),
+            _ => Err(())
+        }
+    }
+}
 
 /// A literal / value.
 #[derive(Debug, Clone)]
