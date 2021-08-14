@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 smallvec = "1.6.1"
+smartstring = "0.2.9"
 
 [dependencies.tagged-box]
 version = "0.1.1"

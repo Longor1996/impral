@@ -30,7 +30,8 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
         
         // Check for start of bareword...
         if current.is_ascii_alphabetic() || current == '_' {
-            let mut buffer = String::from(current);
+            let mut buffer = smartstring::alias::CompactString::new();
+            buffer.push(current);
             
             while let Some((_index, peeked)) = input.peek().copied() {
                 if peeked.is_alphanumeric() || peeked == '_' || peeked == '-' {
@@ -57,7 +58,7 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
         
         // Check for start of string...
         if current == '"' {
-            let mut buffer = String::new();
+            let mut buffer = smartstring::alias::CompactString::new();
             let mut last = current;
             while let Some((_index, peeked)) = input.peek().copied() {
                 if peeked == '"' && last != '\\' {
@@ -75,7 +76,7 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
         
         // Check for start of string...
         if current == '\'' {
-            let mut buffer = String::new();
+            let mut buffer = smartstring::alias::CompactString::new();
             let mut last = current;
             while let Some((_index, peeked)) = input.peek().copied() {
                 if peeked == '\'' && last != '\\' {
@@ -113,7 +114,8 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
                 _ => (current, 1.0f64)
             };
             
-            let mut buffer = String::from(current);
+            let mut buffer = smartstring::alias::CompactString::new();
+            buffer.push(current);
             
             // Check radix.
             let mut radix = 10;
@@ -412,7 +414,7 @@ pub enum Literal {
     Dec(f64),
     
     /// String
-    Str(String),
+    Str(smartstring::alias::CompactString),
     
     /// Bytes
     Byt(Vec<u8>)
