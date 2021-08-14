@@ -1,3 +1,5 @@
+//! Value representation.
+
 use tagged_box::{tagged_box, TaggableContainer, TaggableInner};
 use smallvec::SmallVec;
 

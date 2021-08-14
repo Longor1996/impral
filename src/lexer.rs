@@ -1,10 +1,13 @@
-use std::fmt::Write;
+//! Lexer that `tokenize`s a string slice into an iterator of `Token`'s.
+use std::{convert::TryFrom, fmt::Write};
 
+/// Tokenizes a string slice into an iterator of `Token`'s.
 pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
     
     let mut input = input.char_indices().peekable();
     
     std::iter::from_fn(move || {
+        // Skip any and all whitespace...
         let (index, current) = loop {
             match input.next() {
                 Some(c) => if c.1.is_whitespace() {
@@ -55,11 +58,13 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
                 if peeked.is_alphanumeric() || peeked == '_' || peeked == '-' {
                     buffer.push(peeked);
                     input.next(); // eat char
+                    // NOTE: This could be implemented using `input.next_if`.
                 } else {
                     break;
                 }
             }
             
+            // Check for literals...
             match buffer.as_str() {
                 "null" => return Some((index, Literal::Nil).into()),
                 "true" => return Some((index, Literal::Bool(true)).into()),
@@ -225,9 +230,13 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
     })
 }
 
+/// An individual token.
 #[derive(Debug, Clone)]
 pub struct Token {
+    /// Byte-position of the token in the input string slice.
     pub position: usize,
+    
+    /// The content of the token.
     pub content: TokenContent
 }
 
@@ -258,40 +267,72 @@ impl From<(usize, TokenContent)> for Token {
     }
 }
 
+/// The content of a token.
 #[derive(Debug, Clone)]
 pub enum TokenContent {
+    /// A symbol.
     Symbol(Symbol),
+    
+    /// A literal.
     Literal(Literal),
 }
 
-#[derive(Clone, Copy)]
+/// A symbol of the set of known symbols.
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Symbol {
+    /// `(`
     ParenLeft,
+    /// `)`
     ParenRight,
+    /// `[`
     BraketLeft,
+    /// `]`
     BraketRight,
+    /// `{`
     CurlyLeft,
+    /// `}`
     CurlyRight,
+    /// `<`
     AngleLeft,
+    /// `>`
     AngleRight,
+    /// `+`
     Plus,
+    /// `-`
     Dash,
+    /// `*`
     Star,
+    /// `#`
     Hash,
+    /// `/`
     Slash,
+    /// `~`
     Tilde,
+    /// `,`
     Comma,
+    /// `.`
     Dot,
+    /// `:`
     DoubleDot,
+    /// `;`
     Semicolon,
+    /// `_`
     Underscore,
+    /// `=`
     EqualSign,
+    /// `?`
     QuestionMark,
+    /// `!`
     ExclamationMark,
+    /// `$`
     DollarSign,
+    /// `%`
     Percentage,
+    /// `&`
     Ampersand,
+    /// `|`
     Pipe,
+    /// `^`
     Caret,
 }
 
@@ -337,14 +378,29 @@ impl std::fmt::Debug for Symbol {
     }
 }
 
+
+/// A literal / value.
 #[derive(Debug, Clone)]
 pub enum Literal {
+    /// Nothing
     Nil,
+    
+    /// Boolean
     Bool(bool),
+    
+    /// UTF-Character
     Char(char),
+    
+    /// Signed 64-bit Integer Number
     Int(i64),
+    
+    /// 64-bit Floating Point Number
     Dec(f64),
+    
+    /// String
     Str(String),
+    
+    /// Bytes
     Byt(Vec<u8>)
 }
 
