@@ -1,8 +1,17 @@
 //! Lexer that `tokenize`s a string slice into an iterator of `Token`'s.
-use std::{convert::TryFrom, fmt::Write};
+use std::{convert::TryFrom, fmt::Write, iter::Peekable};
+
+use smartstring::alias::CompactString;
+
+/// A peekable stream of tokens.
+pub type PeekableTokenStream<TS: TokenStream> = Peekable<TS>;
+
+/// A stream of tokens.
+pub trait TokenStream: Iterator<Item = Token> {}
+impl<T> TokenStream for T where T: Iterator<Item = Token> {}
 
 /// Tokenizes a string slice into an iterator of `Token`'s.
-pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
+pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
     
     let mut input = input.char_indices().peekable();
     
@@ -30,7 +39,7 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
         
         // Check for start of bareword...
         if current.is_ascii_alphabetic() || current == '_' {
-            let mut buffer = smartstring::alias::CompactString::new();
+            let mut buffer = CompactString::new();
             buffer.push(current);
             
             while let Some((_index, peeked)) = input.peek().copied() {
@@ -58,7 +67,7 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
         
         // Check for start of string...
         if current == '"' {
-            let mut buffer = smartstring::alias::CompactString::new();
+            let mut buffer = CompactString::new();
             let mut last = current;
             while let Some((_index, peeked)) = input.peek().copied() {
                 if peeked == '"' && last != '\\' {
@@ -76,7 +85,7 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
         
         // Check for start of string...
         if current == '\'' {
-            let mut buffer = smartstring::alias::CompactString::new();
+            let mut buffer = CompactString::new();
             let mut last = current;
             while let Some((_index, peeked)) = input.peek().copied() {
                 if peeked == '\'' && last != '\\' {
@@ -114,7 +123,7 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
                 _ => (current, 1.0f64)
             };
             
-            let mut buffer = smartstring::alias::CompactString::new();
+            let mut buffer = CompactString::new();
             buffer.push(current);
             
             // Check radix.
@@ -207,7 +216,7 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
         }
         
         panic!("Unable to parse token starting with '{}' at position {}", current, index)
-    })
+    }).peekable()
 }
 
 /// An individual token.
@@ -316,6 +325,36 @@ pub enum Symbol {
     Caret,
 }
 
+impl Symbol {
+    /// Is the symbol a delimiter?
+    pub fn is_delimiter(&self) -> bool {
+        matches!(self
+            , Self::ParenLeft | Self::ParenRight
+            | Self::BraketLeft | Self::BraketRight
+            | Self::CurlyLeft | Self::CurlyRight
+            | Self::AngleLeft | Self::AngleRight
+        )
+    }
+    
+    /// Is the symbol a delimiter?
+    pub fn is_end_delimiter(&self) -> bool {
+        matches!(self
+            , Self::ParenRight
+            | Self::BraketRight
+            | Self::CurlyRight
+            | Self::AngleRight
+        )
+    }
+}
+
+impl From<&Symbol> for CompactString {
+    fn from(symbol: &Symbol) -> Self {
+        let mut cs = CompactString::new_const();
+        write!(cs, "{}", symbol).unwrap(); // infallible
+        cs
+    }
+}
+
 impl std::fmt::Display for Symbol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let char = match self {
@@ -414,12 +453,28 @@ pub enum Literal {
     Dec(f64),
     
     /// String
-    Str(smartstring::alias::CompactString),
+    Str(CompactString),
     
     /// Bytes
     Byt(Vec<u8>)
 }
 
+impl Literal {
+    /// Returns the type of the literal as static str.
+    pub fn get_type_str(&self) -> &str {
+        match self {
+            Literal::Nil => "nil",
+            Literal::Bool(_) => "boolean",
+            Literal::Char(_) => "character",
+            Literal::Int(_) => "integer-number",
+            Literal::Dec(_) => "decimal-number",
+            Literal::Str(_) => "char-string",
+            Literal::Byt(_) => "byte-string",
+        }
+    }
+}
+
+#[cfg(test)]
 mod tests {
     #![allow(unused_imports)]
     use super::tokenize;
@@ -445,12 +500,13 @@ mod tests {
     
     #[test]
     fn lex_numbers() {
-        tokenize("0 1 2 3 4 5 6 7 8 9 12345 -123").count();
+        tokenize("0 1 2 3 4 5 6 7 8 9 12345 +123 -123").count();
         tokenize("0b101010 0o10 0d10 0x1F 0.1 0.001 0. 1e3 -0xFF").count();
         tokenize("0.1 0.001 0. 1e3 10e-3 -0.5").count();
     }
     
     #[test]
+    #[ignore]
     fn lex_example() {
         tokenize("blocks (b box 0 0 0 15 15 15) set air").inspect(|t| println!("{:?}",t)).count();
     }
