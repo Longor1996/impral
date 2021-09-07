@@ -4,6 +4,7 @@ use std::{convert::TryFrom, fmt::Write, iter::Peekable};
 use smartstring::alias::CompactString;
 
 /// A peekable stream of tokens.
+#[allow(type_alias_bounds)]
 pub type PeekableTokenStream<TS: TokenStream> = Peekable<TS>;
 
 /// A stream of tokens.
