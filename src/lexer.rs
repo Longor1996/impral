@@ -216,7 +216,9 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             return Some((index, Literal::Dec(value)).into());
         }
         
-        panic!("Unable to parse token starting with '{}' at position {}", current, index)
+        let remainder: String = input.clone().map(|(_, c)| c).collect();
+        return Some((index, TokenContent::Remainder(remainder)).into());
+        //panic!("Unable to parse token starting with '{}' at position {}", current, index)
     }).peekable()
 }
 
@@ -265,6 +267,9 @@ pub enum TokenContent {
     
     /// A literal.
     Literal(Literal),
+    
+    /// The remainder.
+    Remainder(String),
 }
 
 /// A symbol of the set of known symbols.

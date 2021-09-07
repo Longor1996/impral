@@ -19,6 +19,12 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
         // Empty case? Error!
         None => return Err(ParseError::Empty),
         
+        // Remainder? Error!
+        Some(Token {
+            content: TokenContent::Remainder(r),
+            position
+        }) => return Err(ParseError::Unrecognized(position, r)),
+        
         // Literal? Pass thru directly!
         Some(Token {
             content: TokenContent::Literal(l), ..
@@ -76,6 +82,9 @@ pub fn parse_command(
     };
     
     let name: CompactString = match name.content {
+        TokenContent::Remainder(r )
+            => return Err(ParseError::Unrecognized(name.position, r)),
+        
         // Every kind of symbol BUT delimiters can be a command name...
         TokenContent::Symbol(s ) if s.is_delimiter()
             => return Err(ParseError::ExpectButGot("a command name".into(), format!("a '{}'", s).into())),
@@ -209,6 +218,9 @@ pub fn parse_map(
         match tokens.peek().cloned() {
             Some(t) => {
                 match t.content {
+                    TokenContent::Remainder(r )
+                        => return Err(ParseError::Unrecognized(t.position, r)),
+                    
                     TokenContent::Symbol(s) => {
                         if s == Symbol::CurlyRight {
                             drop(tokens.next());
@@ -303,6 +315,10 @@ pub enum ParseError {
     /// The stream of tokens is empty.
     #[error("The stream of tokens is empty")]
     Empty,
+    
+    /// There was a character that could not be tokenized/lexed.
+    #[error("Unrecognized character at {0}: {1}")]
+    Unrecognized(usize, String),
     
     /// The stream of tokens ended unexpectedly.
     #[error("Expected {0}, but reached end of stream")]
