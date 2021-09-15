@@ -1,8 +1,16 @@
 [package]
 name = "impral"
 version = "0.1.0"
+license = "MIT OR Apache-2.0"
 authors = ["Longor1996 <lalongok@gmail.com>"]
 edition = "2018"
+
+description = "A command parsing and evaluation library for a LISP dialect, specialized for commandline input."
+keywords = ["script", "scripting", "language", "lisp"]
+
+readme = "README.md"
+homepage = "https://github.com/Longor1996/impral"
+repository = "https://github.com/Longor1996/impral"
 
 [dependencies]
 smallvec = "1.6.1"
