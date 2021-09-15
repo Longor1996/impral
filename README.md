@@ -1,22 +1,10 @@
-<style>@media all {
-	body{margin:0 auto;max-width:1024px;}
-	h1{font-size:2.5rem}
-	h2{font-size:2.0rem}
-	h3{font-size:1.75rem}
-	h4{font-size:1.5rem}
-	h5{font-size:1.25rem}
-	h6{font-size:1.125rem}
-	table{border:1px solid rgba(127,127,127,0.25);border-radius:3px}
-	div.admonition > pre:only-of-type:last-child {margin:0.6rem -0.6rem;padding:0.5rem}
-	div.admonition > ul {margin:0.6rem 1rem;padding:0.5rem}
-	div.admonition > .admonition-title:only-child {border-bottom:none}
-}</style>
-
 # IMPRAL
 
 ## Introduction
 
 > Originally called *TaleCraft Engine Command Processor System* and developed for the **Talecraft Game Engine** (*TCGE*) by **Longor1996**, ***IMPRAL*** is a simple command processing language, intended for use in a commandline/*REPL*.
+
+Currently incomplete/still in development. Do not use.
 
 ## Syntax & Semantics
 
@@ -45,10 +33,9 @@ A command consists of three (and a half) parts and may contain line breaks:
 
 To sum this up:
 
-!!! snippet Command Syntax
-	Basic Syntax: `symbol arg1 arg2 … argN kvarg1=val kvarg2=val … kvargN=val`
-	
-	With continuation: `symbol … …: command`
+- Basic Command Syntax: `symbol arg1 arg2 … argN kvarg1=val kvarg2=val … kvargN=val`
+- With continuation: `symbol … …: command`
+
 ### Literals
 
 A literal is a simple value, like a number, string, boolean, etc. etc.
@@ -65,13 +52,14 @@ There is `true` and `false`. That's it.
 
 I will not explain what a number is...
 
-!!! snippet Examples
-	- `1337`
-	- `-1`
-	- `42.69`
-	- `1.0e-5`
-	- `0b101010`
-	- `0xC0FFEE`
+Examples:
+
+- `1337`
+- `-1`
+- `42.69`
+- `1.0e-5`
+- `0b101010`
+- `0xC0FFEE`
 
 #### Barewords
 
@@ -80,32 +68,24 @@ always starting with at least one letter.
 
 #### Strings
 
-...?
+You can write just text: `"Hello, World!"`
 
-!!! snippet Simple Strings
-	You can write just text: `"Hello, World!"`  
 #### Lists
 
 A list can be created in two ways: Either by using the `list`-command or the `[ … ]`-syntax.
 
-!!! snippet Trough command...
-	`list item1 item2 … itemN`
+- To create a list by command: `list item1 item2 … itemN`
+- Trough syntax: `[item1, item2, … itemN]`
 
-!!! snippet Trough syntax...
-	`[item1, item2, … itemN]`
-	
-	**Note:** The commas are completely ignored and totally optional.
+> **Note:** The commas are completely ignored and totally optional.
 
 #### Maps
 
 A map, too, can be created in two ways: Either by using the `mmap`-command or the `{ … }`-syntax.
 
-!!! snippet Trough command...
-	`mmap key1 val1 key2 val2 … keyN valN`
+- Trough command: `mmap key1 val1 key2 val2 … keyN valN`
+- Trough syntax: `{ key1: val1, key2: val2, …, keyN: valN}`
 
-!!! snippet Trough syntax...
-	`{ key1: val1, key2: val2, …, keyN: valN}`
-	
-	There *must* be one or more `,` between the key-value pairs; there *may* be a `,` before the `}`.
+There *must* be one or more `,` between the key-value pairs; there *may* be a `,` before the `}`.
 
 
