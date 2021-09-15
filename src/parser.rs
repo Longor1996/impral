@@ -287,13 +287,13 @@ impl std::fmt::Display for Expression {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Invoke {
     /// The name of the command.
-    name: CompactString,
+    pub name: CompactString,
     
     /// The positional arguments.
-    pos_args: Vec<Expression>,
+    pub pos_args: Vec<Expression>,
     
     /// The nominal/named arguments.
-    nom_args: FxHashMap<CompactString, Expression>,
+    pub nom_args: FxHashMap<CompactString, Expression>,
 }
 
 impl std::fmt::Display for Invoke {
