@@ -329,6 +329,8 @@ pub enum Symbol {
     Pipe,
     /// `^`
     Caret,
+    /// `@`
+    At,
 }
 
 impl Symbol {
@@ -391,6 +393,7 @@ impl std::fmt::Display for Symbol {
             Symbol::Ampersand => '&',
             Symbol::Pipe => '|',
             Symbol::Caret => '^',
+            Symbol::At => '@',
         };
         
         f.write_char(char)
@@ -435,6 +438,7 @@ impl TryFrom<char> for Symbol {
             '&' => Ok(Symbol::Ampersand),
             '|' => Ok(Symbol::Pipe),
             '^' => Ok(Symbol::Caret),
+            '@' => Ok(Symbol::At),
             _ => Err(())
         }
     }
