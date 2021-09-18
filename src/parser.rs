@@ -57,6 +57,9 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
             content: TokenContent::Symbol(Symbol::DollarSign), ..
         }) => match tokens.next() {
             Some(Token {
+                content: TokenContent::Symbol(Symbol::DollarSign), ..
+            }) => Expression::Value(ValItem::ResultVar(PhantomData::default()).into()),
+            Some(Token {
                 content: TokenContent::Literal(Literal::Str(s)), ..
             }) => Expression::Value(ValContainer::from(LocalVar(s))),
             Some(Token {
