@@ -109,6 +109,15 @@ pub fn parse_command(
     loop {
         match tokens.peek().cloned() {
             Some(Token {
+                content: TokenContent::Symbol(s), ..
+            })
+                if terminator.map_or(false, |t| t == s)
+            => {
+                // We do NOT drop the terminator here...
+                break // natural end of command, due to terminator.
+            },
+            
+            Some(Token {
                 content: TokenContent::Symbol(Symbol::DoubleDot), ..
             }) => {
                 drop(tokens.next());
@@ -121,18 +130,14 @@ pub fn parse_command(
                 content: TokenContent::Symbol(s), ..
             })
                 if s.is_end_delimiter()
-                || terminator.map_or(false, |t| t == s)
             => {
                 drop(tokens.next());
-                break // natural end of command, due to delimiter or terminator.
+                break // natural end of command, due to delimiter.
             },
             
-            None => if terminator.is_some() {
-                // abnormal end of command, due to missing terminator.
-                return Err(ParseError::ExpectButEnd("a delimiter"))
-            } else {
-                break; // natural end of command, due to EOS.
             },
+            
+            None => break, // natural end of command, due to EOS.
             
             // Attempt parsing arguments...
             Some(_) => {
