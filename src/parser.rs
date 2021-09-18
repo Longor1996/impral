@@ -202,6 +202,24 @@ pub fn parse_command(
             },
             
             Some(Token {
+                content: TokenContent::Symbol(Symbol::Ampersand), ..
+            }) => {
+                drop(tokens.next());
+                
+                let previous = std::mem::replace(&mut cmd, Invoke {
+                    name: "if-then".into(),
+                    pos_args: Default::default(),
+                    nom_args: Default::default(),
+                });
+                
+                cmd.pos_args.push(previous.into());
+                
+                let subcommand = parse_command(tokens, None)?;
+                cmd.pos_args.push(subcommand.into());
+                break; // natural end of command, due to subcommand
+            },
+            
+            Some(Token {
                 content: TokenContent::Symbol(s), ..
             })
                 if s.is_end_delimiter()
@@ -486,6 +504,7 @@ mod tests {
         chk("test {a = 1, b=2, c=-3}")?;
         chk("testA 1 2 3 | testB 4 5 6 | testC 7 8 9")?;
         chk("maybe-null |? accepts-null")?;
+        chk("conditional & execution")?;
         chk("echo \"Hello, World!\" @s.chat ")?;
         chk("tp @a 0 0 0")?;
         chk("tp @a @world.spawn")?;
