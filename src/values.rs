@@ -1,4 +1,4 @@
-//! Value representation.
+//! Runtime value representation using NaN-Tagging.
 #![allow(missing_docs)]
 
 use std::{fmt::Debug, marker::PhantomData};
@@ -10,14 +10,16 @@ use crate::parser::Invoke;
 
 #[derive(Debug, Clone, PartialEq)]
 #[repr(transparent)]
+/// A by-name reference to a global variable.
 pub struct GlobalVar(pub CompactString);
 
 #[derive(Debug, Clone, PartialEq)]
 #[repr(transparent)]
+/// A by-name reference to a local variable.
 pub struct LocalVar(pub CompactString);
 
 tagged_box! {
-    /// A NaN-tagged container for values.
+    /// A NaN-tagged container for values at runtime.
     #[derive(Debug, Clone, PartialEq)]
     pub struct ValContainer,
     pub enum ValItem {
