@@ -1,12 +1,20 @@
 //! Value representation.
 #![allow(missing_docs)]
 
-use std::fmt::Debug;
+use std::{fmt::Debug, marker::PhantomData};
 
 use rustc_hash::FxHashMap;
 use tagged_box::{tagged_box, TaggableContainer};
 use smartstring::alias::CompactString;
-use crate::parser::Invoke;
+use crate::parser::{Expression, Invoke};
+
+#[derive(Debug, Clone, PartialEq)]
+#[repr(transparent)]
+pub struct GlobalVar(pub CompactString);
+
+#[derive(Debug, Clone, PartialEq)]
+#[repr(transparent)]
+pub struct LocalVar(pub CompactString);
 
 tagged_box! {
     /// A NaN-tagged container for values.
@@ -18,6 +26,9 @@ tagged_box! {
         Integer(i32),
         Boolean(bool),
         String(CompactString),
+        GlobalVar(GlobalVar),
+        LocalVar(LocalVar),
+        ResultVar(PhantomData<Result<(),()>>),
         Bytes(Vec<u8>),
         List(Vec<ValContainer>),
         Map(FxHashMap<CompactString, ValContainer>),
@@ -33,7 +44,10 @@ impl std::fmt::Display for ValContainer {
             ValItem::Decimal(v) => write!(f, "{}", v),
             ValItem::Integer(v) => write!(f, "{}", v),
             ValItem::Boolean(v) => write!(f, "{}", v),
-            ValItem::String(v) => write!(f, "{}", v),
+            ValItem::String(v) => write!(f, "\"{}\"", v),
+            ValItem::GlobalVar(v) => write!(f, "@{}", v.0),
+            ValItem::LocalVar(v) => write!(f, "${}", v.0),
+            ValItem::ResultVar(_) => write!(f, "$$"),
             ValItem::Bytes(_v) => write!(f, "Bytes"),
             ValItem::List(v) => {
                 write!(f, "[")?;

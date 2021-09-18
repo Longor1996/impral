@@ -1,6 +1,6 @@
 //! Parses a stream of tokens into an AST.
 
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Debug, marker::PhantomData};
 
 use tagged_box::TaggableContainer;
 //use smallvec::SmallVec;
@@ -8,10 +8,7 @@ use thiserror::Error;
 use rustc_hash::FxHashMap;
 use smartstring::alias::CompactString;
 
-use crate::{
-    lexer::{Literal, PeekableTokenStream, Symbol, Token, TokenContent, TokenStream},
-    values::*
-};
+use crate::{lexer::{Literal, PeekableTokenStream, Symbol, Token, TokenContent, TokenStream}, values::*};
 
 /// Parses a `TokenStream` into an AST.
 pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> Result<Expression, ParseError> {
@@ -44,6 +41,29 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
         Some(Token {
             content: TokenContent::Symbol(Symbol::CurlyLeft), ..
         }) => parse_map(tokens).map(|v| Expression::Value(ValContainer::from(v)))?,
+        
+        // Global Variable!
+        Some(Token {
+            content: TokenContent::Symbol(Symbol::At), ..
+        }) => match tokens.next() {
+            Some(Token {
+                content: TokenContent::Literal(Literal::Str(s)), ..
+            }) => Expression::Value(ValContainer::from(GlobalVar(s))),
+            _ => return Err(ParseError::ExpectButGot("a string literal".into(), "something else".into())),
+        },
+        
+        // Local Variable!
+        Some(Token {
+            content: TokenContent::Symbol(Symbol::DollarSign), ..
+        }) => match tokens.next() {
+            Some(Token {
+                content: TokenContent::Literal(Literal::Str(s)), ..
+            }) => Expression::Value(ValContainer::from(LocalVar(s))),
+            Some(Token {
+                content: TokenContent::Literal(Literal::Int(i)), ..
+            }) => Expression::Value(ValContainer::from(LocalVar(i.to_string().into()))),
+            _ => return Err(ParseError::ExpectButGot("a string or integer literal".into(), "something else".into())),
+        },
         
         // Doubledot? Invalid!
         Some(Token {
@@ -306,14 +326,14 @@ impl From<Invoke> for Expression {
 impl std::fmt::Display for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Expression::Value(l) => l.fmt(f),
+            Expression::Value(l) => std::fmt::Display::fmt(l, f),
             Expression::Invoke(c) => write!(f, "({})", c),
         }
     }
 }
 
 /// A command to be evaluated.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct Invoke {
     /// The name of the command.
     pub name: CompactString,
@@ -346,7 +366,7 @@ pub enum ParseError {
     Empty,
     
     /// There was a character that could not be tokenized/lexed.
-    #[error("Unrecognized character at {0}: {1}")]
+    #[error("Unrecognized token at {0}: {1}")]
     Unrecognized(usize, String),
     
     /// The stream of tokens ended unexpectedly.
@@ -400,6 +420,7 @@ mod tests {
         chk("test [1 2 3 4 5]")?;
         chk("test {a = 1, b=2, c=-3}")?;
         chk("testA 1 2 3 | testB 4 5 6 | testC 7 8 9")?;
+        chk("echo \"Hello, World!\" @s.chat ")?;
         Ok(())
     }
     
