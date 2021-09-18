@@ -186,7 +186,7 @@ pub fn parse_list(
                 }
                 
                 let expr = parse_expression(tokens)?;
-                list.push(expr.into());
+                list.push((&expr).into());
             },
             None => return Err(ParseError::ExpectButEnd("end of list ']'")),
         }
@@ -233,7 +233,7 @@ pub fn parse_map(
                         }
                         
                         let expr = parse_expression(tokens)?;
-                        map.insert(key, expr.into());
+                        map.insert(key, (&expr).into());
                     },
                     TokenContent::Literal(l) => return Err(ParseError::Unexpected(format!("literal {:?}", l).into()))
                 };

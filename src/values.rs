@@ -1,7 +1,7 @@
 //! Runtime value representation using NaN-Tagging.
 #![allow(missing_docs)]
 
-use std::{fmt::Debug, marker::PhantomData};
+use std::{convert::TryFrom, fmt::Debug, marker::PhantomData};
 
 use rustc_hash::FxHashMap;
 use tagged_box::{tagged_box, TaggableContainer};
@@ -93,11 +93,11 @@ impl From<crate::lexer::Literal> for ValContainer {
     }
 }
 
-impl From<crate::parser::Expression> for ValContainer {
-    fn from(expr: crate::parser::Expression) -> Self {
+impl From<&crate::parser::Expression> for ValContainer {
+    fn from(expr: &crate::parser::Expression) -> Self {
         match expr {
-            crate::parser::Expression::Value(v) => v,
-            crate::parser::Expression::Invoke(i) => Self::from(ValItem::Invoke((*i).into())),
+            crate::parser::Expression::Value(v) => v.clone(),
+            crate::parser::Expression::Invoke(i) => Self::from(ValItem::Invoke(i.clone())),
         }
     }
 }
