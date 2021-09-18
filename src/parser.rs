@@ -2,6 +2,7 @@
 
 use std::{borrow::Cow, fmt::Debug, marker::PhantomData};
 
+use smallvec::{SmallVec, smallvec};
 use tagged_box::TaggableContainer;
 //use smallvec::SmallVec;
 use thiserror::Error;
@@ -92,7 +93,7 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
                 drop(tokens.next()); // drop the dot
                 let mut get = Invoke {
                     name: "idx".into(),
-                    pos_args: vec![expr],
+                    pos_args: smallvec![expr],
                     nom_args: Default::default(),
                 };
                 
@@ -116,7 +117,7 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
                 drop(tokens.next()); // drop the dot
                 expr = Expression::Invoke(Invoke {
                     name: "exists".into(),
-                    pos_args: vec![expr],
+                    pos_args: smallvec![expr],
                     nom_args: Default::default(),
                 }.into());
             },
@@ -129,7 +130,7 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
                 let to = parse_expression(tokens)?;
                 expr = Expression::Invoke(Invoke {
                     name: "rel".into(),
-                    pos_args: vec![expr, to],
+                    pos_args: smallvec![expr, to],
                     nom_args: Default::default(),
                 }.into());
             },
@@ -254,7 +255,7 @@ pub fn parse_command(
                     } else {
                         cmd.pos_args.push(Invoke {
                             name: "nonull".into(),
-                            pos_args: vec![Expression::Value(ValContainer::from(PhantomData::<Result<(),()>>::default()))],
+                            pos_args: smallvec![Expression::Value(ValContainer::from(PhantomData::<Result<(),()>>::default()))],
                             ..Default::default()
                         }.into());
                     }
@@ -424,7 +425,9 @@ pub struct Invoke {
     pub name: CompactString,
     
     /// The positional arguments.
-    pub pos_args: Vec<Expression>,
+    ///
+    /// As long as there is only one positional argument, there will be no direct heap allocation.
+    pub pos_args: SmallVec<[Expression; 1]>,
     
     /// The nominal/named arguments.
     pub nom_args: FxHashMap<CompactString, Expression>,
@@ -476,6 +479,12 @@ mod tests {
     use super::*;
     use crate::lexer::tokenize;
     
+    fn chk(input: &str) -> Result<(), ParseError> {
+        let output = parse_command(&mut tokenize(input), None)?;
+        eprintln!("INPUT:  {},\t PARSED:  {}", input, output);
+        Ok(())
+    }
+    
     #[test]
     fn sizes() {
         use std::mem::size_of;
@@ -484,16 +493,14 @@ mod tests {
         eprintln!("SizeOf AST.V = {}", size_of::<ValContainer>());
         eprintln!("SizeOf AST.E = {}", size_of::<Expression>());
         eprintln!("SizeOf AST.C = {}", size_of::<Invoke>());
+        
+        assert!(size_of::<ValContainer>() == 8, "The size of a ValContainer-struct should be exactly 8 bytes.");
+        assert!(size_of::<Expression>() == 16, "The size of a Expression-struct should be exactly 16 bytes.");
+        assert!(size_of::<Invoke>() <= 96, "The size of an Invoke-struct should be below 96 bytes.");
     }
     
     #[test]
     fn should_succeed() -> Result<(), ParseError> {
-        fn chk(input: &str) -> Result<(), ParseError> {
-            let output = parse_command(&mut tokenize(input), None)?;
-            eprintln!("INPUT:  {},\t PARSED:  {}", input, output);
-            Ok(())
-        }
-        
         chk("= 1 2 3")?;
         chk("+ 1 2 3")?;
         chk("- 1 2 3")?;
@@ -519,6 +526,6 @@ mod tests {
     #[test]
     #[should_panic]
     fn should_fail() {
-        eprintln!("-> {}", parse_command(&mut tokenize("test 1 a=2 3 b=4"), None).unwrap());
+        chk("test 1 a=2 3 b=4").expect("positional arguments cannot be written after nominal arguments");
     }
 }

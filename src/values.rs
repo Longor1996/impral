@@ -32,7 +32,7 @@ tagged_box! {
         Bytes(Vec<u8>),
         List(Vec<ValContainer>),
         Map(FxHashMap<CompactString, ValContainer>),
-        Invoke(Invoke),
+        Invoke(Box<Invoke>),
         //Dyn(Box<dyn std::any::Any + PartialEq<dyn std::any::Any>>),
     }
 }
@@ -95,7 +95,7 @@ impl From<crate::parser::Expression> for ValContainer {
     fn from(expr: crate::parser::Expression) -> Self {
         match expr {
             crate::parser::Expression::Value(v) => v,
-            crate::parser::Expression::Invoke(i) => Self::from(ValItem::Invoke(*i)),
+            crate::parser::Expression::Invoke(i) => Self::from(ValItem::Invoke((*i).into())),
         }
     }
 }
