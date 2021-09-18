@@ -49,7 +49,8 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
             Some(Token {
                 content: TokenContent::Literal(Literal::Str(s)), ..
             }) => Expression::Value(ValContainer::from(GlobalVar(s))),
-            _ => return Err(ParseError::ExpectButGot("a string literal".into(), "something else".into())),
+            Some(t) => return Err(ParseError::ExpectButGot("a global variable name".into(), format!("{}", t).into())),
+            None => return Err(ParseError::ExpectButEnd("a global variable name")),
         },
         
         // Local Variable!
@@ -65,7 +66,8 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
             Some(Token {
                 content: TokenContent::Literal(Literal::Int(i)), ..
             }) => Expression::Value(ValContainer::from(LocalVar(i.to_string().into()))),
-            _ => return Err(ParseError::ExpectButGot("a string or integer literal".into(), "something else".into())),
+            Some(t) => return Err(ParseError::ExpectButGot("a local variable name".into(), format!("{}", t).into())),
+            None => return Err(ParseError::ExpectButEnd("a local variable name")),
         },
         
         // Doubledot? Invalid!
@@ -279,7 +281,7 @@ pub fn parse_command(
                         let lexpr = match expr {
                             Expression::Value(val) => match val.into_inner() {
                                 ValItem::String(s) => s,
-                                _ => return Err(ParseError::ExpectButGot("a parameter name".into(), "something else".into())),
+                                val => return Err(ParseError::ExpectButGot("a parameter name".into(), format!("{}", val).into())),
                             },
                             _ => return Err(ParseError::ExpectButGot("a parameter name".into(), "a symbol or command".into())),
                         };
@@ -487,7 +489,8 @@ mod tests {
     #[test]
     fn should_succeed() -> Result<(), ParseError> {
         fn chk(input: &str) -> Result<(), ParseError> {
-            eprintln!("INPUT:  {},\t PARSED:  {}", input, parse_command(&mut tokenize(input), None)?);
+            let output = parse_command(&mut tokenize(input), None)?;
+            eprintln!("INPUT:  {},\t PARSED:  {}", input, output);
             Ok(())
         }
         
