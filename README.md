@@ -29,63 +29,73 @@ A command consists of three (and a half) parts and may contain line breaks:
 
 4. **Continuation command.** (*optional*)  
 	Another command that is an extra positional parameter in the last position, written after a `:`.
-	Many commands allow you to omit it.
 
 To sum this up:
 
 - Basic Command Syntax: `symbol arg1 arg2 … argN kvarg1=val kvarg2=val … kvargN=val`
 - With continuation: `symbol … …: command`
 
+#### Subcommands
+
+Commands can be enclosed in parentheses and be used as arguments for other commands:  `(symbol …)`
+
+#### Falliable Commands
+
+One may write two commands in succession, separated by an ampersand/`&`, in which case the latter command will only be executed if the former succeeds, with the result being bound to `$$`: `foo … & bar $$ …`
+
+#### Command Pipes
+
+A sequence of commands can be written as a `pipe`, in which every command passes it's result (`$$`) to the next command: `players | where $$.health less 50 | heal $$`
+
 ### Literals
 
 A literal is a simple value, like a number, string, boolean, etc. etc.
 
-#### Nothing
+Following is a list of possible literals:
 
-The absence of a value; written as `null`.
+- **Nothing**: The absence of a value; written as `null`.
+- **Booleans**: There is `true` and `false`. That's it.
+- **Numbers**: Numbers can be written in a variety of ways...
+  - `1337`
+  - `-1`
+  - `42.69`
+  - `1.0e-5`
+  - `0b101010`
+  - `0xC0FFEE`
+- **Barewords**: A bareword is any sequence of characters that consists entirely of letters,
+                 digits, `_` and `-`, always starting with at least one letter.
+- **Strings**: Any text enclosed in double-quotes! `"Hello, World!"`
+- **Lists**: A list can be created in two ways...
+  - Trough syntax: `[item1, item2, … itemN]` (the commas are optional!)
+  - By command: `list item1 item2 … itemN`
+- **Maps**: A map, too, can be created in two ways...
+  - Trough syntax: `{ key1: val1, key2: val2, …, keyN: valN}`
+    > There *must* be one or more `,` between the key-value pairs;
+    > there *may* be a `,` before the `}`.
+  - By command: `mmap key1 val1 key2 val2 … keyN valN`
 
-#### Booleans
+### Variables
 
-There is `true` and `false`. That's it.
+There are several types of variable:
 
-#### Numbers
+- **Global Variables**: Written as `@NAME`.
+- **Local Variables**: Written as `$NAME` or `$NUMBER`.
+- **Result Variable**: Written as `$$`.
 
-I will not explain what a number is...
+### Indexing
 
-Examples:
+By using either the `.`/`.?`-syntax or the `idx`/`idxn`-commands, values may have sub-values.
 
-- `1337`
-- `-1`
-- `42.69`
-- `1.0e-5`
-- `0b101010`
-- `0xC0FFEE`
+### Exists?
 
-#### Barewords
+By using the `?` postfix-operator, one can test if the given value is `null`.
 
-A bareword is any sequence of characters that consists entirely of letters, digits, `_` and `-`,
-always starting with at least one letter.
+### Relation
 
-#### Strings
+> TODO: Specifiy how the relation/relative-to operator should work.
 
-You can write just text: `"Hello, World!"`
+## TODO
 
-#### Lists
-
-A list can be created in two ways: Either by using the `list`-command or the `[ … ]`-syntax.
-
-- To create a list by command: `list item1 item2 … itemN`
-- Trough syntax: `[item1, item2, … itemN]`
-
-> **Note:** The commas are completely ignored and totally optional.
-
-#### Maps
-
-A map, too, can be created in two ways: Either by using the `mmap`-command or the `{ … }`-syntax.
-
-- Trough command: `mmap key1 val1 key2 val2 … keyN valN`
-- Trough syntax: `{ key1: val1, key2: val2, …, keyN: valN}`
-
-There *must* be one or more `,` between the key-value pairs; there *may* be a `,` before the `}`.
-
-
+- [ ] Ranges
+- [ ] Units
+- [ ] Interpreter

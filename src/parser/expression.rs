@@ -156,11 +156,6 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
         }
     }
     
-    // postfix stuff!
-    // TODO: Ranges
-    // TODO: Units
-    // etc. etc.
-    
     Ok(expr)
 }
 
