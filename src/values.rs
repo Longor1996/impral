@@ -107,3 +107,125 @@ impl From<&str> for ValContainer {
         Self::from(ValItem::String(str.into()))
     }
 }
+
+impl TryFrom<&ValContainer> for i32 {
+    type Error = &'static str;
+    
+    fn try_from(val: &ValContainer) -> Result<Self, Self::Error> {
+        let mut res = Err("uninitialized");
+        unsafe {
+            tagged_box::TaggableInner::ref_from_tagged_box(&val.value, |val| {
+                res = match val {
+                    ValItem::Nothing(_) => Err("unable to cast nothing to i32"),
+                    ValItem::Decimal(d) => Ok((*d).floor() as Self),
+                    ValItem::Integer(i) => Ok(*i),
+                    ValItem::Boolean(_) => Err("unable to cast bool to i32"),
+                    ValItem::String(_) => Err("unable to cast string to i32"),
+                    ValItem::GlobalVar(_) => Err("unable to cast global-var to i32"),
+                    ValItem::LocalVar(_) => Err("unable to cast local-var to i32"),
+                    ValItem::ResultVar(_) => Err("unable to cast result-var to i32"),
+                    ValItem::Bytes(_) => Err("unable to cast bytes to i32"),
+                    ValItem::List(_) => Err("unable to cast list to i32"),
+                    ValItem::Map(_) => Err("unable to cast map to i32"),
+                    ValItem::Invoke(_) => Err("unable to cast invocation to i32"),
+                }
+            })
+        };
+        
+        res
+    }
+}
+
+impl TryFrom<&ValContainer> for f64 {
+    type Error = &'static str;
+    
+    fn try_from(val: &ValContainer) -> Result<Self, Self::Error> {
+        let mut res = Err("uninitialized");
+        unsafe {
+            tagged_box::TaggableInner::ref_from_tagged_box(&val.value, |val| {
+                res = match val {
+                    ValItem::Nothing(_) => Err("unable to cast nothing to i32"),
+                    ValItem::Decimal(d) => Ok(*d),
+                    ValItem::Integer(i) => Ok(*i as Self),
+                    ValItem::Boolean(_) => Err("unable to cast bool to i32"),
+                    ValItem::String(_) => Err("unable to cast string to i32"),
+                    ValItem::GlobalVar(_) => Err("unable to cast global-var to i32"),
+                    ValItem::LocalVar(_) => Err("unable to cast local-var to i32"),
+                    ValItem::ResultVar(_) => Err("unable to cast result-var to i32"),
+                    ValItem::Bytes(_) => Err("unable to cast bytes to i32"),
+                    ValItem::List(_) => Err("unable to cast list to i32"),
+                    ValItem::Map(_) => Err("unable to cast map to i32"),
+                    ValItem::Invoke(_) => Err("unable to cast invocation to i32"),
+                }
+            });
+        };
+        
+        res
+    }
+}
+
+impl From<&ValContainer> for String {
+    fn from(val: &ValContainer) -> Self {
+        format!("{}", &val)
+    }
+}
+
+impl TryFrom<&ValContainer> for Vec<ValContainer> {
+    type Error = &'static str;
+    
+    fn try_from(val: &ValContainer) -> Result<Self, Self::Error> {
+        use std::iter::once;
+        
+        let mut res = Err("uninitialized");
+        unsafe {
+            tagged_box::TaggableInner::ref_from_tagged_box(&val.value, |val| {
+                res = match val {
+                    ValItem::Nothing(_) => Ok(Default::default()),
+                    ValItem::Decimal(_) => Err("unable to cast decimal to list"),
+                    ValItem::Integer(_) => Err("unable to cast decimal to list"),
+                    ValItem::Boolean(_) => Err("unable to cast bool to list"),
+                    ValItem::String(_) => Err("unable to cast string to list"),
+                    ValItem::GlobalVar(_) => Err("unable to cast global-var to list"),
+                    ValItem::LocalVar(_) => Err("unable to cast local-var to list"),
+                    ValItem::ResultVar(_) => Err("unable to cast result-var to list"),
+                    
+                    ValItem::Bytes(bytes) => Ok(bytes.iter().map(|b| ValContainer::from(*b as i32)).collect()),
+                    
+                    ValItem::List(list) => Ok(list.clone()),
+                    
+                    ValItem::Map(map) => {
+                        Ok(map
+                            .iter()
+                            .map(|(k,v)| once(ValItem::String(k.clone()).into()).chain(once(v.clone())))
+                            .flatten()
+                            .collect()
+                        )
+                    },
+                    
+                    ValItem::Invoke(cmd) => {
+                        let pos_args = cmd.pos_args
+                            .iter()
+                            .map(|arg| arg.into())
+                            .collect::<Vec<ValContainer>>()
+                            .into();
+                        
+                        let nom_args = cmd.nom_args
+                            .iter()
+                            .map(|(k,v)| once(ValContainer::from(k.clone())).chain(once(v.into())))
+                            .flatten()
+                            .collect::<Vec<ValContainer>>()
+                            .into();
+                        
+                        Ok(vec![
+                            cmd.name.clone().into(),
+                            pos_args,
+                            nom_args,
+                        ])
+                    },
+                };
+            })
+        };
+        
+        res
+    }
+}
