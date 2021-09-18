@@ -12,7 +12,7 @@ use crate::{lexer::{Literal, PeekableTokenStream, Symbol, Token, TokenContent, T
 
 /// Parses a `TokenStream` into an AST.
 pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> Result<Expression, ParseError> {
-    let expr = match tokens.next() {
+    let mut expr = match tokens.next() {
         // Empty case? Error!
         None => return Err(ParseError::Empty),
         
@@ -78,13 +78,40 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
         }
     };
     
+    if let Some(token) = tokens.peek() {
+        match token {
+            // Dot? Subset access!
+            Token {
+                content: TokenContent::Symbol(Symbol::Dot), ..
+            } => {
+                drop(tokens.next()); // drop the dot
+                let mut get = Invoke {
+                    name: "idx".into(),
+                    pos_args: vec![expr],
+                    nom_args: Default::default(),
+                };
+                
+                if let Some(Token {
+                    content: TokenContent::Symbol(Symbol::QuestionMark), ..
+                }) = tokens.peek() {
+                    get.name = "idxn".into();
+                    drop(tokens.next()); // drop the question-mark
+                }
+                
+                let inner = parse_expression(tokens)?;
+                get.pos_args.push(inner);
+                
+                expr = Expression::Invoke(get.into());
+            },
+            // Ignore everything else...
+            _ => ()
+        }
+    }
+    
     // postfix stuff!
     // TODO: Ranges
     // TODO: Units
     // TODO: RelativeTo
-    // TODO: Exists
-    // TODO: Dot-Indexing
-    // TODO: Box-Indexing
     // etc. etc.
     
     Ok(expr)
