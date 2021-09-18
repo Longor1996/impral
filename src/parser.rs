@@ -383,17 +383,23 @@ mod tests {
     
     #[test]
     fn should_succeed() -> Result<(), ParseError> {
-        eprintln!("-> {}", parse_command(&mut tokenize("= 1 2 3"), None)?);
-        eprintln!("-> {}", parse_command(&mut tokenize("+ 1 2 3"), None)?);
-        eprintln!("-> {}", parse_command(&mut tokenize("- 1 2 3"), None)?);
-        eprintln!("-> {}", parse_command(&mut tokenize("* 1 2 3"), None)?);
-        eprintln!("-> {}", parse_command(&mut tokenize("/ 1 2 3"), None)?);
-        eprintln!("-> {}", parse_command(&mut tokenize("test 1 2 3"), None)?);
-        eprintln!("-> {}", parse_command(&mut tokenize("test 1 2 3 a=4"), None)?);
-        eprintln!("-> {}", parse_command(&mut tokenize("mul 2 (+ 1 2 3)"), None)?);
-        eprintln!("-> {}", parse_command(&mut tokenize("test foo: bar baz"), None)?);
-        eprintln!("-> {}", parse_command(&mut tokenize("test [1 2 3 4 5]"), None)?);
-        eprintln!("-> {}", parse_command(&mut tokenize("test {a = 1, b=2, c=-3}"), None)?);
+        fn chk(input: &str) -> Result<(), ParseError> {
+            eprintln!("INPUT:  {},\t PARSED:  {}", input, parse_command(&mut tokenize(input), None)?);
+            Ok(())
+        }
+        
+        chk("= 1 2 3")?;
+        chk("+ 1 2 3")?;
+        chk("- 1 2 3")?;
+        chk("* 1 2 3")?;
+        chk("/ 1 2 3")?;
+        chk("test 1 2 3")?;
+        chk("test 1 2 3 a=4")?;
+        chk("mul 2 (+ 1 2 3)")?;
+        chk("test foo: bar baz")?;
+        chk("test [1 2 3 4 5]")?;
+        chk("test {a = 1, b=2, c=-3}")?;
+        chk("testA 1 2 3 | testB 4 5 6 | testC 7 8 9")?;
         Ok(())
     }
     
