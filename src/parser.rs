@@ -174,6 +174,16 @@ pub fn parse_command(
                         return Err(ParseError::ExpectButEnd("another command in the pipe"));
                     }
                     
+                    if let Some(Token { content: TokenContent::Symbol(Symbol::QuestionMark), .. }) = tokens.peek() {
+                        drop(tokens.next()); // drop the question-mark
+                    } else {
+                        cmd.pos_args.push(Invoke {
+                            name: "nonull".into(),
+                            pos_args: vec![Expression::Value(ValContainer::from(PhantomData::<Result<(),()>>::default()))],
+                            ..Default::default()
+                        }.into());
+                    }
+                    
                     let subcommand = parse_command(tokens, Some(Symbol::Pipe))?;
                     cmd.pos_args.push(subcommand.into());
                 }
@@ -420,6 +430,7 @@ mod tests {
         chk("test [1 2 3 4 5]")?;
         chk("test {a = 1, b=2, c=-3}")?;
         chk("testA 1 2 3 | testB 4 5 6 | testC 7 8 9")?;
+        chk("maybe-null |? accepts-null")?;
         chk("echo \"Hello, World!\" @s.chat ")?;
         Ok(())
     }
