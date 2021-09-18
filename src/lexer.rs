@@ -232,6 +232,12 @@ pub struct Token {
     pub content: TokenContent
 }
 
+impl std::fmt::Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} at {}", self.content, self.position)
+    }
+}
+
 impl From<(usize, Symbol)> for Token {
     fn from(src: (usize, Symbol)) -> Self {
         Token {
