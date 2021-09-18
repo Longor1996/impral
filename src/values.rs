@@ -6,7 +6,7 @@ use std::{fmt::Debug, marker::PhantomData};
 use rustc_hash::FxHashMap;
 use tagged_box::{tagged_box, TaggableContainer};
 use smartstring::alias::CompactString;
-use crate::parser::{Expression, Invoke};
+use crate::parser::Invoke;
 
 #[derive(Debug, Clone, PartialEq)]
 #[repr(transparent)]
@@ -37,9 +37,9 @@ tagged_box! {
     }
 }
 
-impl std::fmt::Display for ValContainer {
+impl std::fmt::Display for ValItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.clone().into_inner() {
+        match self {
             ValItem::Nothing(_v) => write!(f, "Nil"),
             ValItem::Decimal(v) => write!(f, "{}", v),
             ValItem::Integer(v) => write!(f, "{}", v),
@@ -51,7 +51,7 @@ impl std::fmt::Display for ValContainer {
             ValItem::Bytes(_v) => write!(f, "Bytes"),
             ValItem::List(v) => {
                 write!(f, "[")?;
-                for i in &v {
+                for i in v {
                     write!(f, "{} ", i)?;
                 }
                 write!(f, "]")?;
@@ -59,7 +59,7 @@ impl std::fmt::Display for ValContainer {
             },
             ValItem::Map(v) => {
                 write!(f, "{{")?;
-                for (k, v) in &v {
+                for (k, v) in v {
                     write!(f, "{} = {} ", k, v)?;
                 }
                 write!(f, "}}")?;
@@ -67,6 +67,12 @@ impl std::fmt::Display for ValContainer {
             },
             ValItem::Invoke(v) => write!(f, "{:?}", v),
         }
+    }
+}
+
+impl std::fmt::Display for ValContainer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.clone().into_inner(), f)
     }
 }
 
