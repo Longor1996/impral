@@ -79,3 +79,9 @@ impl From<crate::parser::Expression> for ValContainer {
         }
     }
 }
+
+impl From<&str> for ValContainer {
+    fn from(str: &str) -> Self {
+        Self::from(ValItem::String(str.into()))
+    }
+}
