@@ -1,6 +1,6 @@
 [package]
 name = "impral"
-version = "0.1.1"
+version = "0.1.2"
 license = "MIT OR Apache-2.0"
 authors = ["Longor1996 <lalongok@gmail.com>"]
 edition = "2018"
