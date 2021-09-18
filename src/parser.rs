@@ -119,6 +119,19 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
                 }.into());
             },
             
+            // Tilde? Relation!
+            Token {
+                content: TokenContent::Symbol(Symbol::Tilde), ..
+            } => {
+                drop(tokens.next()); // drop the dot
+                let to = parse_expression(tokens)?;
+                expr = Expression::Invoke(Invoke {
+                    name: "rel".into(),
+                    pos_args: vec![expr, to],
+                    nom_args: Default::default(),
+                }.into());
+            },
+            
             // Ignore everything else...
             _ => ()
         }
@@ -127,7 +140,6 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
     // postfix stuff!
     // TODO: Ranges
     // TODO: Units
-    // TODO: RelativeTo
     // etc. etc.
     
     Ok(expr)
@@ -475,6 +487,10 @@ mod tests {
         chk("testA 1 2 3 | testB 4 5 6 | testC 7 8 9")?;
         chk("maybe-null |? accepts-null")?;
         chk("echo \"Hello, World!\" @s.chat ")?;
+        chk("tp @a 0 0 0")?;
+        chk("tp @a @world.spawn")?;
+        chk("tp @a 0 100 0 rel=@self")?;
+        chk("for @a: tp [0 100 0]~$$")?;
         Ok(())
     }
     
