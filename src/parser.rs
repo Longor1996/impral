@@ -103,6 +103,19 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
                 
                 expr = Expression::Invoke(get.into());
             },
+            
+            // QuestionMark? Existence check!
+            Token {
+                content: TokenContent::Symbol(Symbol::QuestionMark), ..
+            } => {
+                drop(tokens.next()); // drop the dot
+                expr = Expression::Invoke(Invoke {
+                    name: "exists".into(),
+                    pos_args: vec![expr],
+                    nom_args: Default::default(),
+                }.into());
+            },
+            
             // Ignore everything else...
             _ => ()
         }
