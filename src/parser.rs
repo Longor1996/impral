@@ -135,6 +135,30 @@ pub fn parse_command(
                 break // natural end of command, due to delimiter.
             },
             
+            Some(Token {
+                content: TokenContent::Symbol(Symbol::Pipe), ..
+            }) => {
+                let previous = std::mem::replace(&mut cmd, Invoke {
+                    name: "pipe".into(),
+                    pos_args: Default::default(),
+                    nom_args: Default::default(),
+                });
+                
+                cmd.pos_args.push(previous.into());
+                
+                // parse further commands as long as there are pipe symbols
+                while let Some(Token { content: TokenContent::Symbol(Symbol::Pipe), .. }) = tokens.peek() {
+                    drop(tokens.next()); // drop the pipe symbol
+                    
+                    if tokens.peek().is_none() {
+                        return Err(ParseError::ExpectButEnd("another command in the pipe"));
+                    }
+                    
+                    let subcommand = parse_command(tokens, Some(Symbol::Pipe))?;
+                    cmd.pos_args.push(subcommand.into());
+                }
+                
+                break; // natural end of command, no more pipes.
             },
             
             None => break, // natural end of command, due to EOS.
