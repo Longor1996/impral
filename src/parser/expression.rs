@@ -3,7 +3,7 @@
 use super::*;
 
 /// A expression node of an abstract syntax tree.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Expression {
     /// A literal.
     Value(ValContainer),
@@ -18,11 +18,11 @@ impl From<Invoke> for Expression {
     }
 }
 
-impl std::fmt::Display for Expression {
+impl std::fmt::Debug for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Expression::Value(l) => std::fmt::Display::fmt(l, f),
-            Expression::Invoke(c) => write!(f, "({})", c),
+            Expression::Value(l) => std::fmt::Debug::fmt(l, f),
+            Expression::Invoke(c) => write!(f, "({:?})", c),
         }
     }
 }

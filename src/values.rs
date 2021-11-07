@@ -2,7 +2,6 @@
 #![allow(missing_docs)]
 
 use std::{convert::TryFrom, fmt::Debug, marker::PhantomData};
-
 use rustc_hash::FxHashMap;
 use tagged_box::{tagged_box, TaggableContainer};
 use smartstring::alias::CompactString;
@@ -20,7 +19,7 @@ pub struct LocalVar(pub CompactString);
 
 tagged_box! {
     /// A NaN-tagged container for values at runtime.
-    #[derive(Debug, Clone, PartialEq)]
+    #[derive(Clone, PartialEq)]
     pub struct ValContainer,
     pub enum ValItem {
         Nothing(()),
@@ -39,7 +38,7 @@ tagged_box! {
     }
 }
 
-impl std::fmt::Display for ValItem {
+impl std::fmt::Debug for ValItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ValItem::Nothing(_v) => write!(f, "Nil"),
@@ -54,7 +53,7 @@ impl std::fmt::Display for ValItem {
             ValItem::List(v) => {
                 write!(f, "[")?;
                 for i in v {
-                    write!(f, "{} ", i)?;
+                    write!(f, "{:?} ", i)?;
                 }
                 write!(f, "]")?;
                 Ok(())
@@ -62,7 +61,7 @@ impl std::fmt::Display for ValItem {
             ValItem::Map(v) => {
                 write!(f, "{{")?;
                 for (k, v) in v {
-                    write!(f, "{} = {} ", k, v)?;
+                    write!(f, "{} = {:?} ", k, v)?;
                 }
                 write!(f, "}}")?;
                 Ok(())
@@ -72,9 +71,9 @@ impl std::fmt::Display for ValItem {
     }
 }
 
-impl std::fmt::Display for ValContainer {
+impl std::fmt::Debug for ValContainer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(&self.clone().into_inner(), f)
+        std::fmt::Debug::fmt(&self.clone().into_inner(), f)
     }
 }
 
@@ -166,7 +165,7 @@ impl TryFrom<&ValContainer> for f64 {
 
 impl From<&ValContainer> for String {
     fn from(val: &ValContainer) -> Self {
-        format!("{}", &val)
+        format!("{:?}", &val)
     }
 }
 

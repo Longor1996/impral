@@ -136,7 +136,7 @@ pub fn parse_command(
                         let lexpr = match expr {
                             Expression::Value(val) => match val.into_inner() {
                                 ValItem::String(s) => s,
-                                val => return Err(ParseError::ExpectButGot("a parameter name".into(), format!("{}", val).into())),
+                                val => return Err(ParseError::ExpectButGot("a parameter name".into(), format!("{:?}", val).into())),
                             },
                             _ => return Err(ParseError::ExpectButGot("a parameter name".into(), "a symbol or command".into())),
                         };
@@ -167,7 +167,7 @@ pub fn parse_command(
 }
 
 /// A command to be evaluated.
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub struct Invoke {
     /// The name of the command.
     pub name: CompactString,
@@ -181,14 +181,14 @@ pub struct Invoke {
     pub nom_args: FxHashMap<CompactString, Expression>,
 }
 
-impl std::fmt::Display for Invoke {
+impl std::fmt::Debug for Invoke {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", &self.name)?;
         for arg in &self.pos_args {
-            write!(f, " {}", arg)?;
+            write!(f, " {:?}", arg)?;
         }
         for (key, arg) in &self.nom_args {
-            write!(f, " {}={}", key, arg)?;
+            write!(f, " {}={:?}", key, arg)?;
         }
         write!(f, "")
     }

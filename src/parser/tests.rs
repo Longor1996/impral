@@ -5,7 +5,7 @@ use crate::lexer::tokenize;
 
 fn chk(input: &str) -> Result<(), ParseError> {
     let output = parse_command(&mut tokenize(input), None)?;
-    eprintln!("INPUT:  {},\t PARSED:  {}", input, output);
+    eprintln!("INPUT:  {},\t PARSED:  {:?}", input, output);
     Ok(())
 }
 
