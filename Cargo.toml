@@ -13,6 +13,7 @@ homepage = "https://github.com/Longor1996/impral"
 repository = "https://github.com/Longor1996/impral"
 
 [dependencies]
+peekmore = "1.0.0"
 smallvec = "1.6.1"
 smartstring = "0.2.9"
 rustc-hash = "1.1.0"

@@ -1,6 +1,7 @@
 //! Lexer that `tokenize`s a string slice into an iterator of `Token`'s.
 use std::{convert::TryFrom, iter::Peekable};
 use smartstring::alias::CompactString;
+use peekmore::*;
 
 pub mod tokenizer;
 pub use tokenizer::*;

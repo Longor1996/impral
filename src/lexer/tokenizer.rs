@@ -13,7 +13,7 @@ impl<T> TokenStream for T where T: Iterator<Item = Token> {}
 /// Creates an iterator of `Token`'s from the given string slice.
 pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
     
-    let mut input = input.char_indices().peekable();
+    let mut input = input.char_indices().peekmore();
     
     std::iter::from_fn(move || {
         // Skip any and all whitespace...
@@ -159,11 +159,17 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                 Err(err) => panic!("Failed to parse '{}' with radix {}: {}", buffer, radix, err),
             };
             
-            let decimal = if radix == 10 && '.' == input.peek().copied().map(|c|c.1).unwrap_or(' ') {
+            let decimal = if radix == 10
+                && '.' == input.peek_nth(0).copied().map(|c|c.1).unwrap_or(' ')
+                
+                // This is here so that two dot's in a row, a range, are not eaten.
+                && '.' != input.peek_nth(1).copied().map(|c|c.1).unwrap_or(' ')
+            {
                 // Eat all the DECIMALS...
                 buffer.clear(); // reuse the buffer, cuz why not
                 buffer.push_str("0.");
                 input.next(); // eat the `.`
+                
                 while let Some((_index, peeked)) = input.peek().copied() {
                     if peeked.is_ascii_digit() {
                         buffer.push(peeked);
@@ -216,7 +222,7 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         }
         
         let remainder: String = input.clone().map(|(_, c)| c).collect();
-        return Some((index, TokenContent::Remainder(remainder)).into());
+        Some((index, TokenContent::Remainder(remainder)).into())
         //panic!("Unable to parse token starting with '{}' at position {}", current, index)
     }).peekable()
 }
