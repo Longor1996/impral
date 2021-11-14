@@ -160,23 +160,42 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
                 content: TokenContent::Symbol(Symbol::Dot), ..
             } => {
                 drop(tokens.next()); // drop the dot
-                let mut get = Invoke {
-                    name: "idx".into(),
-                    pos_args: smallvec![expr],
-                    nom_args: Default::default(),
-                };
                 
                 if let Some(Token {
-                    content: TokenContent::Symbol(Symbol::QuestionMark), ..
+                    content: TokenContent::Symbol(Symbol::Dot), ..
                 }) = tokens.peek() {
-                    get.name = "idxn".into();
-                    drop(tokens.next()); // drop the question-mark
+                    drop(tokens.next()); // drop the second dot
+                    
+                    let mut range = Invoke {
+                        name: "range".into(),
+                        pos_args: smallvec![expr],
+                        nom_args: Default::default(),
+                    };
+                    
+                    let inner = parse_expression(tokens)?;
+                    range.pos_args.push(inner);
+                    
+                    expr = Expression::Invoke(range.into());
                 }
-                
-                let inner = parse_expression(tokens)?;
-                get.pos_args.push(inner);
-                
-                expr = Expression::Invoke(get.into());
+                else {
+                    let mut get = Invoke {
+                        name: "idx".into(),
+                        pos_args: smallvec![expr],
+                        nom_args: Default::default(),
+                    };
+                    
+                    if let Some(Token {
+                        content: TokenContent::Symbol(Symbol::QuestionMark), ..
+                    }) = tokens.peek() {
+                        get.name = "idxn".into();
+                        drop(tokens.next()); // drop the question-mark
+                    }
+                    
+                    let inner = parse_expression(tokens)?;
+                    get.pos_args.push(inner);
+                    
+                    expr = Expression::Invoke(get.into());
+                }
             },
             
             // QuestionMark? Existence check!

@@ -35,6 +35,7 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("- 1 2 3")?;
     chk("* 1 2 3")?;
     chk("/ 1 2 3")?;
+    chk("test 1.234 2.345 1.99999 0.000001")?;
     chk("test 1 2 3")?;
     chk("test 1 2 3 a=4")?;
     chk("mul 2 (+ 1 2 3)")?;
@@ -49,6 +50,8 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("tp @a @world.spawn")?;
     chk("tp @a 0 100 0 rel=@self")?;
     chk("for @a: tp [0 100 0]~$$")?;
+    chk("test 0..10")?;
+    chk("test (get1)..(get2)")?;
     Ok(())
 }
 

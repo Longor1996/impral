@@ -86,6 +86,10 @@ There are several types of variable:
 
 By using either the `.`/`.?`-syntax or the `idx`/`idxn`-commands, values may have sub-values.
 
+### Ranges
+
+By typing two consecutive dots (`..`), a range of/between two expressions can be created.
+
 ### Exists?
 
 By using the `?` postfix-operator, one can test if the given value is `null`.
@@ -96,6 +100,6 @@ By using the `?` postfix-operator, one can test if the given value is `null`.
 
 ## TODO
 
-- [ ] Ranges
-- [ ] Units
-- [ ] Interpreter
+- [ ] Index after integer: `0123.INDEX`
+- [ ] Units?
+- [ ] Interpreter?
