@@ -10,7 +10,7 @@ pub type PeekableTokenStream<TS: TokenStream> = Peekable<TS>;
 pub trait TokenStream: Iterator<Item = Token> {}
 impl<T> TokenStream for T where T: Iterator<Item = Token> {}
 
-/// Tokenizes a string slice into an iterator of `Token`'s.
+/// Creates an iterator of `Token`'s from the given string slice.
 pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
     
     let mut input = input.char_indices().peekable();

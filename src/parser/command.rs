@@ -109,7 +109,7 @@ pub fn parse_command(
                     } else {
                         cmd.pos_args.push(Invoke {
                             name: "nonull".into(),
-                            pos_args: smallvec![Expression::Value(ValContainer::from(PhantomData::<Result<(),()>>::default()))],
+                            pos_args: smallvec![Expression::Reference(ReferenceRoot::Res)],
                             ..Default::default()
                         }.into());
                     }
@@ -134,8 +134,8 @@ pub fn parse_command(
                     }) => {
                         // (l)expr into key
                         let lexpr = match expr {
-                            Expression::Value(val) => match val.into_inner() {
-                                ValItem::String(s) => s,
+                            Expression::Value(val) => match val {
+                                Literal::Str(s) => s,
                                 val => return Err(ParseError::ExpectButGot("a parameter name".into(), format!("{:?}", val).into())),
                             },
                             _ => return Err(ParseError::ExpectButGot("a parameter name".into(), "a symbol or command".into())),

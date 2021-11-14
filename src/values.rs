@@ -30,6 +30,7 @@ tagged_box! {
         GlobalVar(GlobalVar),
         LocalVar(LocalVar),
         ResultVar(PhantomData<Result<(),()>>),
+        ContextVar(PhantomData<()>),
         Bytes(Vec<u8>),
         List(Vec<ValContainer>),
         Map(FxHashMap<CompactString, ValContainer>),
@@ -49,6 +50,7 @@ impl std::fmt::Debug for ValItem {
             ValItem::GlobalVar(v) => write!(f, "@{}", v.0),
             ValItem::LocalVar(v) => write!(f, "${}", v.0),
             ValItem::ResultVar(_) => write!(f, "$$"),
+            ValItem::ContextVar(_) => write!(f, "$"),
             ValItem::Bytes(_v) => write!(f, "Bytes"),
             ValItem::List(v) => {
                 write!(f, "[")?;
@@ -77,27 +79,43 @@ impl std::fmt::Debug for ValContainer {
     }
 }
 
-impl From<crate::lexer::Literal> for ValContainer {
-    fn from(literal: crate::lexer::Literal) -> Self {
+impl From<&crate::lexer::Literal> for ValContainer {
+    fn from(literal: &crate::lexer::Literal) -> Self {
         use crate::lexer::Literal;
         match literal {
             Literal::Nil => Self::from(()),
-            Literal::Bool(v) => Self::from(v),
-            Literal::Char(v) => Self::from(v as i32),
-            Literal::Int(v) => Self::from(v as i32),
-            Literal::Dec(v) => Self::from(v),
-            Literal::Str(v) => Self::from(v),
-            Literal::Byt(v) => Self::from(v),
+            Literal::Bool(v) => Self::from(*v),
+            Literal::Char(v) => Self::from(*v as i32),
+            Literal::Int(v) => Self::from(*v as i32),
+            Literal::Dec(v) => Self::from(*v),
+            Literal::Str(v) => Self::from(v.clone()),
+            Literal::Byt(v) => Self::from(v.clone()),
         }
     }
 }
 
 impl From<&crate::parser::Expression> for ValContainer {
     fn from(expr: &crate::parser::Expression) -> Self {
-        match expr {
-            crate::parser::Expression::Value(v) => v.clone(),
-            crate::parser::Expression::Invoke(i) => Self::from(ValItem::Invoke(i.clone())),
-        }
+        use crate::lexer::Literal;
+        use crate::parser::Expression;
+        use crate::parser::ReferenceRoot;
+        use crate::parser::Structure;
+        Self::from(match expr {
+            Expression::Invoke(i) => ValItem::Invoke(i.clone()),
+            Expression::Value(Literal::Nil) => ValItem::Nothing(()),
+            Expression::Value(Literal::Bool(v)) => ValItem::Boolean(*v),
+            Expression::Value(Literal::Char(v)) => ValItem::Integer(*v as i32),
+            Expression::Value(Literal::Int(v)) => ValItem::Integer(*v as i32),
+            Expression::Value(Literal::Dec(v)) => ValItem::Decimal(*v),
+            Expression::Value(Literal::Str(v)) => ValItem::String(v.clone()),
+            Expression::Value(Literal::Byt(v)) => ValItem::Bytes(v.clone()),
+            Expression::Structure(Structure::List(l)) => ValItem::List(l.iter().map(|i| i.into()).collect()),
+            Expression::Structure(Structure::Dict(d)) => ValItem::Map(d.iter().map(|(k,v)| (k.clone(),v.into())).collect()),
+            Expression::Reference(ReferenceRoot::Ctx) => ValItem::ContextVar(PhantomData::default()),
+            Expression::Reference(ReferenceRoot::Res) => ValItem::ResultVar(PhantomData::default()),
+            Expression::Reference(ReferenceRoot::Local(l)) => ValItem::LocalVar(LocalVar(l.clone())),
+            Expression::Reference(ReferenceRoot::Global(g)) => ValItem::GlobalVar(GlobalVar(g.clone())),
+        })
     }
 }
 
@@ -123,6 +141,7 @@ impl TryFrom<&ValContainer> for i32 {
                     ValItem::GlobalVar(_) => Err("unable to cast global-var to i32"),
                     ValItem::LocalVar(_) => Err("unable to cast local-var to i32"),
                     ValItem::ResultVar(_) => Err("unable to cast result-var to i32"),
+                    ValItem::ContextVar(_) => Err("unable to cast context-var to i32"),
                     ValItem::Bytes(_) => Err("unable to cast bytes to i32"),
                     ValItem::List(_) => Err("unable to cast list to i32"),
                     ValItem::Map(_) => Err("unable to cast map to i32"),
@@ -151,6 +170,7 @@ impl TryFrom<&ValContainer> for f64 {
                     ValItem::GlobalVar(_) => Err("unable to cast global-var to i32"),
                     ValItem::LocalVar(_) => Err("unable to cast local-var to i32"),
                     ValItem::ResultVar(_) => Err("unable to cast result-var to i32"),
+                    ValItem::ContextVar(_) => Err("unable to cast context-var to i32"),
                     ValItem::Bytes(_) => Err("unable to cast bytes to i32"),
                     ValItem::List(_) => Err("unable to cast list to i32"),
                     ValItem::Map(_) => Err("unable to cast map to i32"),
@@ -187,6 +207,7 @@ impl TryFrom<&ValContainer> for Vec<ValContainer> {
                     ValItem::GlobalVar(_) => Err("unable to cast global-var to list"),
                     ValItem::LocalVar(_) => Err("unable to cast local-var to list"),
                     ValItem::ResultVar(_) => Err("unable to cast result-var to list"),
+                    ValItem::ContextVar(_) => Err("unable to cast context-var to list"),
                     
                     ValItem::Bytes(bytes) => Ok(bytes.iter().map(|b| ValContainer::from(*b as i32)).collect()),
                     

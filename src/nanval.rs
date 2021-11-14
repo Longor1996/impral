@@ -1,5 +1,9 @@
 //! A NaN-tagged value.
 
+// References:
+// - https://sean.cm/a/nan-boxing
+// - https://github.com/Marwes/nanbox/blob/master/src/lib.rs
+
 use std::num::NonZeroU16;
 
 const NAN_SIGNAL: u64 = 0xFFF0000000000000;

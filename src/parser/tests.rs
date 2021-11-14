@@ -1,7 +1,6 @@
 //! Tests to ensure stuff works.
 
 use super::*;
-use crate::lexer::tokenize;
 
 fn chk(input: &str) -> Result<(), ParseError> {
     let output = parse_command(&mut tokenize(input), None)?;
@@ -12,15 +11,21 @@ fn chk(input: &str) -> Result<(), ParseError> {
 #[test]
 fn sizes() {
     use std::mem::size_of;
+    use crate::values::*;
+    
+    eprintln!("SizeOf µSTR = {}", size_of::<CompactString>());
+    eprintln!("SizeOf [()] = {}", size_of::<Vec<()>>());
     eprintln!("SizeOf LEX.L = {}", size_of::<Literal>());
     eprintln!("SizeOf LEX.S = {}", size_of::<Symbol>());
-    eprintln!("SizeOf AST.V = {}", size_of::<ValContainer>());
     eprintln!("SizeOf AST.E = {}", size_of::<Expression>());
-    eprintln!("SizeOf AST.C = {}", size_of::<Invoke>());
+    eprintln!("SizeOf [AST.E;1] = {}", size_of::<SmallVec<[Expression;1]>>());
+    eprintln!("- SizeOf AST.S = {}", size_of::<Structure>());
+    eprintln!("- SizeOf AST.R = {}", size_of::<ReferenceRoot>());
+    eprintln!("- SizeOf AST.I = {}", size_of::<Invoke>());
+    eprintln!("SizeOf EXE.V = {}", size_of::<ValContainer>());
     
     assert!(size_of::<ValContainer>() == 8, "The size of a ValContainer-struct should be exactly 8 bytes.");
-    assert!(size_of::<Expression>() == 16, "The size of a Expression-struct should be exactly 16 bytes.");
-    assert!(size_of::<Invoke>() <= 96, "The size of an Invoke-struct should be below 96 bytes.");
+    assert!(size_of::<Invoke>() <= 128, "The size of an Invoke-struct should be below 128 bytes.");
 }
 
 #[test]

@@ -6,10 +6,38 @@ use super::*;
 #[derive(Clone, PartialEq)]
 pub enum Expression {
     /// A literal.
-    Value(ValContainer),
+    Value(Literal),
+    
+    /// A structure (*not* a command!).
+    Structure(Structure),
+    
+    /// A reference.
+    Reference(ReferenceRoot),
     
     /// A command.
     Invoke(Box<Invoke>),
+}
+
+/// A (data-)structure node of an abstract syntax tree.
+#[derive(Clone, PartialEq)]
+pub enum Structure {
+    /// A list.
+    List(Vec<Expression>),
+    /// A dict.
+    Dict(FxHashMap<CompactString, Expression>),
+}
+
+/// A reference(/variable) node of an abstract syntax tree.
+#[derive(Clone, PartialEq)]
+pub enum ReferenceRoot {
+    /// Context Reference (`$`)
+    Ctx,
+    /// Result Reference (`$$`)
+    Res,
+    /// Local Reference (`$NAME`)
+    Local(CompactString),
+    /// Global Reference (`@NAME`)
+    Global(CompactString),
 }
 
 impl From<Invoke> for Expression {
@@ -22,7 +50,32 @@ impl std::fmt::Debug for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Expression::Value(l) => std::fmt::Debug::fmt(l, f),
+            Expression::Structure(s) => std::fmt::Debug::fmt(s, f),
+            Expression::Reference(ReferenceRoot::Ctx) => write!(f, "$"),
+            Expression::Reference(ReferenceRoot::Res) => write!(f, "$$"),
+            Expression::Reference(ReferenceRoot::Local(l)) => write!(f, "${}", l),
+            Expression::Reference(ReferenceRoot::Global(g)) => write!(f, "@{}", g),
             Expression::Invoke(c) => write!(f, "({:?})", c),
+        }
+    }
+}
+
+impl std::fmt::Debug for Structure {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::List(l) => std::fmt::Debug::fmt(l, f),
+            Self::Dict(s) => std::fmt::Debug::fmt(s, f),
+        }
+    }
+}
+
+impl std::fmt::Debug for ReferenceRoot {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Ctx => write!(f, "$"),
+            Self::Res => write!(f, "$$"),
+            Self::Local(l) => write!(f, "${}", l),
+            Self::Global(g) => write!(f, "@{}", g),
         }
     }
 }
@@ -42,7 +95,7 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
         // Literal? Pass thru directly!
         Some(Token {
             content: TokenContent::Literal(l), ..
-        }) => Expression::Value(l.into()),
+        }) => Expression::Value(l),
         
         // Parentheses? Parse a command!
         Some(Token {
@@ -52,12 +105,12 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
         // Brackets? Parse a list!
         Some(Token {
             content: TokenContent::Symbol(Symbol::BraketLeft), ..
-        }) => parse_list(tokens).map(|v| Expression::Value(ValContainer::from(v)))?,
+        }) => parse_list(tokens).map(|v| Expression::Structure(Structure::List(v)))?,
         
         // Curlies? Parse a map!
         Some(Token {
             content: TokenContent::Symbol(Symbol::CurlyLeft), ..
-        }) => parse_map(tokens).map(|v| Expression::Value(ValContainer::from(v)))?,
+        }) => parse_map(tokens).map(|d| Expression::Structure(Structure::Dict(d)))?,
         
         // Global Variable!
         Some(Token {
@@ -65,7 +118,7 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
         }) => match tokens.next() {
             Some(Token {
                 content: TokenContent::Literal(Literal::Str(s)), ..
-            }) => Expression::Value(ValContainer::from(GlobalVar(s))),
+            }) => Expression::Reference(ReferenceRoot::Global(s)),
             Some(t) => return Err(ParseError::ExpectButGot("a global variable name".into(), format!("{}", t).into())),
             None => return Err(ParseError::ExpectButEnd("a global variable name")),
         },
@@ -76,13 +129,13 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
         }) => match tokens.next() {
             Some(Token {
                 content: TokenContent::Symbol(Symbol::DollarSign), ..
-            }) => Expression::Value(ValItem::ResultVar(PhantomData::default()).into()),
+            }) => Expression::Reference(ReferenceRoot::Res),
             Some(Token {
                 content: TokenContent::Literal(Literal::Str(s)), ..
-            }) => Expression::Value(ValContainer::from(LocalVar(s))),
+            }) => Expression::Reference(ReferenceRoot::Local(s)),
             Some(Token {
                 content: TokenContent::Literal(Literal::Int(i)), ..
-            }) => Expression::Value(ValContainer::from(LocalVar(i.to_string().into()))),
+            }) => Expression::Reference(ReferenceRoot::Local(i.to_string().into())),
             Some(t) => return Err(ParseError::ExpectButGot("a local variable name".into(), format!("{}", t).into())),
             None => return Err(ParseError::ExpectButEnd("a local variable name")),
         },
@@ -162,7 +215,7 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
 /// Parses the stream of tokens into a list.
 pub fn parse_list(
     tokens: &mut PeekableTokenStream<impl TokenStream>
-) -> Result<Vec<ValContainer>, ParseError> {
+) -> Result<Vec<Expression>, ParseError> {
     let mut list = Vec::default();
     
     loop {
@@ -181,7 +234,7 @@ pub fn parse_list(
                 }
                 
                 let expr = parse_expression(tokens)?;
-                list.push((&expr).into());
+                list.push(expr);
             },
             None => return Err(ParseError::ExpectButEnd("end of list ']'")),
         }
@@ -193,7 +246,7 @@ pub fn parse_list(
 /// Parses the stream of tokens into a key/value-map.
 pub fn parse_map(
     tokens: &mut PeekableTokenStream<impl TokenStream>
-) -> Result<FxHashMap<CompactString, ValContainer>, ParseError> {
+) -> Result<FxHashMap<CompactString, Expression>, ParseError> {
     let mut map = FxHashMap::default();
     
     loop {
@@ -228,7 +281,7 @@ pub fn parse_map(
                         }
                         
                         let expr = parse_expression(tokens)?;
-                        map.insert(key, (&expr).into());
+                        map.insert(key, expr);
                     },
                     TokenContent::Literal(l) => return Err(ParseError::Unexpected(format!("literal {:?}", l).into()))
                 };
