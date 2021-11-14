@@ -11,7 +11,6 @@ fn chk(input: &str) -> Result<(), ParseError> {
 #[test]
 fn sizes() {
     use std::mem::size_of;
-    use crate::values::*;
     
     eprintln!("SizeOf µSTR = {}", size_of::<CompactString>());
     eprintln!("SizeOf [()] = {}", size_of::<Vec<()>>());
@@ -22,9 +21,9 @@ fn sizes() {
     eprintln!("- SizeOf AST.S = {}", size_of::<Structure>());
     eprintln!("- SizeOf AST.R = {}", size_of::<ReferenceRoot>());
     eprintln!("- SizeOf AST.I = {}", size_of::<Invoke>());
-    eprintln!("SizeOf EXE.V = {}", size_of::<ValContainer>());
+    //eprintln!("SizeOf EXE.V = {}", size_of::<crate::values::ValContainer>());
     
-    assert!(size_of::<ValContainer>() == 8, "The size of a ValContainer-struct should be exactly 8 bytes.");
+    //assert!(size_of::<crate::values::ValContainer>() == 8, "The size of a ValContainer-struct should be exactly 8 bytes.");
     assert!(size_of::<Invoke>() <= 128, "The size of an Invoke-struct should be below 128 bytes.");
 }
 
