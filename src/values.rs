@@ -19,7 +19,7 @@ pub struct LocalVar(pub CompactString);
 
 tagged_box! {
     /// A NaN-tagged container for values at runtime.
-    #[derive(Clone, PartialEq)]
+    #[derive(Clone)]
     pub struct ValContainer,
     pub enum ValItem {
         Nothing(()),
@@ -36,6 +36,27 @@ tagged_box! {
         Map(FxHashMap<CompactString, ValContainer>),
         Invoke(Box<Invoke>),
         //Dyn(Box<dyn std::any::Any + PartialEq<dyn std::any::Any>>),
+    }
+}
+
+impl PartialEq for ValItem {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Nothing(l0), Self::Nothing(r0)) => l0 == r0,
+            (Self::Decimal(l0), Self::Decimal(r0)) => l0 == r0,
+            (Self::Integer(l0), Self::Integer(r0)) => l0 == r0,
+            (Self::Boolean(l0), Self::Boolean(r0)) => l0 == r0,
+            (Self::String(l0), Self::String(r0)) => l0 == r0,
+            (Self::GlobalVar(l0), Self::GlobalVar(r0)) => l0 == r0,
+            (Self::LocalVar(l0), Self::LocalVar(r0)) => l0 == r0,
+            (Self::ResultVar(l0), Self::ResultVar(r0)) => l0 == r0,
+            (Self::ContextVar(l0), Self::ContextVar(r0)) => l0 == r0,
+            (Self::Bytes(l0), Self::Bytes(r0)) => l0 == r0,
+            //(Self::List(l0), Self::List(r0)) => l0 == r0,
+            //(Self::Map(l0), Self::Map(r0)) => l0 == r0,
+            (Self::Invoke(l0), Self::Invoke(r0)) => l0 == r0,
+            _ => false
+        }
     }
 }
 
