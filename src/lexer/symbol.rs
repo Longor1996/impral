@@ -97,38 +97,38 @@ impl From<&Symbol> for CompactString {
 
 impl std::fmt::Display for Symbol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let char = match self {
-            Symbol::ParenLeft => '(',
-            Symbol::ParenRight => ')',
-            Symbol::BraketLeft => '[',
-            Symbol::BraketRight => ']',
-            Symbol::CurlyLeft => '{',
-            Symbol::CurlyRight => '}',
-            Symbol::AngleLeft => '<',
-            Symbol::AngleRight => '>',
-            Symbol::Plus => '+',
-            Symbol::Dash => '-',
-            Symbol::Star => '*',
-            Symbol::Hash => '#',
-            Symbol::Slash => '/',
-            Symbol::Tilde => '~',
-            Symbol::Comma => ',',
-            Symbol::Dot => '.',
-            Symbol::DoubleDot => ':',
-            Symbol::Semicolon => ';',
-            Symbol::Underscore => '_',
-            Symbol::EqualSign => '=',
-            Symbol::QuestionMark => '?',
-            Symbol::ExclamationMark => '!',
-            Symbol::DollarSign => '$',
-            Symbol::Percentage => '%',
-            Symbol::Ampersand => '&',
-            Symbol::Pipe => '|',
-            Symbol::Caret => '^',
-            Symbol::At => '@',
+        let str = match self {
+            Symbol::ParenLeft => "(",
+            Symbol::ParenRight => ")",
+            Symbol::BraketLeft => "[",
+            Symbol::BraketRight => "]",
+            Symbol::CurlyLeft => "{",
+            Symbol::CurlyRight => "}",
+            Symbol::AngleLeft => "<",
+            Symbol::AngleRight => ">",
+            Symbol::Plus => "+",
+            Symbol::Dash => "-",
+            Symbol::Star => "*",
+            Symbol::Hash => "#",
+            Symbol::Slash => "/",
+            Symbol::Tilde => "~",
+            Symbol::Comma => ",",
+            Symbol::Dot => ".",
+            Symbol::DoubleDot => ":",
+            Symbol::Semicolon => ";",
+            Symbol::Underscore => "_",
+            Symbol::EqualSign => "=",
+            Symbol::QuestionMark => "?",
+            Symbol::ExclamationMark => "!",
+            Symbol::DollarSign => "$",
+            Symbol::Percentage => "%",
+            Symbol::Ampersand => "&",
+            Symbol::Pipe => "|",
+            Symbol::Caret => "^",
+            Symbol::At => "@",
         };
         
-        f.write_char(char)
+        f.write_str(str)
     }
 }
 
