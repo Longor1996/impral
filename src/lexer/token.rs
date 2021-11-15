@@ -5,8 +5,11 @@ use super::{Literal, Symbol};
 /// An individual token.
 #[derive(Debug, Clone)]
 pub struct Token {
-    /// Byte-position of the token in the input string slice.
-    pub position: usize,
+    /// Byte-position of the START of the token in the input string slice.
+    pub start: usize,
+    
+    /// Byte-position of the END of the token in the input string slice.
+    pub end: usize,
     
     /// The content of the token.
     pub content: TokenContent
@@ -14,33 +17,36 @@ pub struct Token {
 
 impl std::fmt::Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} at {}", self.content, self.position)
+        write!(f, "{:?} at {}", self.content, self.start)
     }
 }
 
-impl From<(usize, Symbol)> for Token {
-    fn from(src: (usize, Symbol)) -> Self {
+impl From<(usize, usize, Symbol)> for Token {
+    fn from(src: (usize, usize, Symbol)) -> Self {
         Token {
-            position: src.0,
-            content: TokenContent::Symbol(src.1)
+            start: src.0,
+            end: src.1,
+            content: TokenContent::Symbol(src.2)
         }
     }
 }
 
-impl From<(usize, Literal)> for Token {
-    fn from(src: (usize, Literal)) -> Self {
+impl From<(usize, usize, Literal)> for Token {
+    fn from(src: (usize, usize, Literal)) -> Self {
         Token {
-            position: src.0,
-            content: TokenContent::Literal(src.1)
+            start: src.0,
+            end: src.1,
+            content: TokenContent::Literal(src.2)
         }
     }
 }
 
-impl From<(usize, TokenContent)> for Token {
-    fn from(src: (usize, TokenContent)) -> Self {
+impl From<(usize, usize, TokenContent)> for Token {
+    fn from(src: (usize, usize, TokenContent)) -> Self {
         Token {
-            position: src.0,
-            content: src.1
+            start: src.0,
+            end: src.1,
+            content: src.2
         }
     }
 }

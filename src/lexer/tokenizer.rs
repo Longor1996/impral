@@ -28,12 +28,14 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             };
         };
         
+        let mut last_idx = index;
+        
         // Check for individual symbols...
         if let Ok(symbol) = Symbol::try_from(current) {
             // '+' and '-' are handled elsewhere...
             if ! (symbol == Symbol::Plus || symbol == Symbol::Dash) {
                 // ...everything else is immediately turned into a token.
-                return Some((index, symbol).into());
+                return Some((index, index+1, symbol).into());
             }
         }
         
@@ -42,7 +44,8 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             let mut buffer = CompactString::new();
             buffer.push(current);
             
-            while let Some((_index, peeked)) = input.peek().copied() {
+            while let Some((index, peeked)) = input.peek().copied() {
+                last_idx = index;
                 if peeked.is_alphanumeric() || peeked == '_' || peeked == '-' {
                     buffer.push(peeked);
                     input.next(); // eat char
@@ -54,15 +57,15 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             
             // Check for literals...
             match buffer.as_str() {
-                "null" => return Some((index, Literal::Nil).into()),
-                "true" => return Some((index, Literal::Bool(true)).into()),
-                "false" => return Some((index, Literal::Bool(false)).into()),
-                "NaN" => return Some((index, Literal::Dec(f64::NAN)).into()),
-                "infinity" => return Some((index, Literal::Dec(f64::INFINITY)).into()),
+                "null" => return Some((index, last_idx, Literal::Nil).into()),
+                "true" => return Some((index, last_idx, Literal::Bool(true)).into()),
+                "false" => return Some((index, last_idx, Literal::Bool(false)).into()),
+                "NaN" => return Some((index, last_idx, Literal::Dec(f64::NAN)).into()),
+                "infinity" => return Some((index, last_idx, Literal::Dec(f64::INFINITY)).into()),
                 _ => ()
             }
             
-            return Some((index, Literal::Str(buffer)).into());
+            return Some((index, last_idx, Literal::Str(buffer)).into());
         }
         
         // Check for start of string...
@@ -70,6 +73,7 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             let mut buffer = CompactString::new();
             let mut last = current;
             while let Some((_index, peeked)) = input.peek().copied() {
+                last_idx = index;
                 if peeked == '"' && last != '\\' {
                     input.next(); // drop the `"`
                     break;
@@ -80,14 +84,15 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                 }
             }
             
-            return Some((index, Literal::Str(buffer)).into());
+            return Some((index, last_idx, Literal::Str(buffer)).into());
         }
         
         // Check for start of string...
         if current == '\'' {
             let mut buffer = CompactString::new();
             let mut last = current;
-            while let Some((_index, peeked)) = input.peek().copied() {
+            while let Some((index, peeked)) = input.peek().copied() {
+                last_idx = index;
                 if peeked == '\'' && last != '\\' {
                     input.next(); // drop the `"`
                     break;
@@ -98,7 +103,7 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                 }
             }
             
-            return Some((index, Literal::Str(buffer)).into());
+            return Some((index, last_idx, Literal::Str(buffer)).into());
         }
         
         // Check for start of number...
@@ -108,14 +113,14 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             let (current, sign) = match current {
                 '-' => {
                     if !peeked.is_ascii_digit() {
-                        return Some((index, Symbol::Dash).into());
+                        return Some((index, index+1, Symbol::Dash).into());
                     }
                     
                     (input.next().map(|c|c.1).unwrap_or('0'), -1.0f64)
                 },
                 '+' => {
                     if !peeked.is_ascii_digit() {
-                        return Some((index, Symbol::Plus).into());
+                        return Some((index, index+1, Symbol::Plus).into());
                     }
                     
                     (input.next().map(|c|c.1).unwrap_or('0'), 1.0f64)
@@ -212,17 +217,17 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             
             if decimal == 0.0 {
                 if pow10 > 0.0 {
-                    return Some((index, Literal::Int((sign as i64) * integer * (pow10 as i64))).into());
+                    return Some((index, index, Literal::Int((sign as i64) * integer * (pow10 as i64))).into());
                 }
-                return Some((index, Literal::Dec((sign) * (integer as f64) * (pow10 as f64))).into());
+                return Some((index, index, Literal::Dec((sign) * (integer as f64) * (pow10 as f64))).into());
             }
             
             let value = (sign) * (integer as f64 + decimal) * (pow10 as f64);
-            return Some((index, Literal::Dec(value)).into());
+            return Some((index, index, Literal::Dec(value)).into());
         }
         
         let remainder: String = input.clone().map(|(_, c)| c).collect();
-        Some((index, TokenContent::Remainder(remainder)).into())
+        Some((index, index+remainder.len(), TokenContent::Remainder(remainder)).into())
         //panic!("Unable to parse token starting with '{}' at position {}", current, index)
     }).peekable()
 }

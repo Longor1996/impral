@@ -89,8 +89,8 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
         // Remainder? Error!
         Some(Token {
             content: TokenContent::Remainder(r),
-            position
-        }) => return Err(ParseError::Unrecognized(position, r)),
+            start, end: _
+        }) => return Err(ParseError::Unrecognized(start, r)),
         
         // Literal? Pass thru directly!
         Some(Token {
@@ -273,7 +273,7 @@ pub fn parse_map(
             Some(t) => {
                 match t.content {
                     TokenContent::Remainder(r )
-                        => return Err(ParseError::Unrecognized(t.position, r)),
+                        => return Err(ParseError::Unrecognized(t.start, r)),
                     
                     TokenContent::Symbol(s) => {
                         if s == Symbol::CurlyRight {

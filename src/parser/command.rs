@@ -15,7 +15,7 @@ pub fn parse_command(
     
     let name: CompactString = match name.content {
         TokenContent::Remainder(r )
-            => return Err(ParseError::Unrecognized(name.position, r)),
+            => return Err(ParseError::Unrecognized(name.start, r)),
         
         // Every kind of symbol BUT delimiters can be a command name...
         TokenContent::Symbol(s ) if s.is_delimiter()
