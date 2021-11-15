@@ -30,6 +30,12 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         
         let mut last_idx = index;
         
+        // Check for symbol pairings...
+        if let Ok(symbol) = Symbol::try_from((current, input.peek().map(|c|c.1).unwrap_or(' '))) {
+            input.next(); // drop the next char
+            return Some((index, index+2, symbol).into());
+        }
+        
         // Check for individual symbols...
         if let Ok(symbol) = Symbol::try_from(current) {
             // '+' and '-' are handled elsewhere...

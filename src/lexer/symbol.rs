@@ -63,6 +63,18 @@ pub enum Symbol {
     Caret,
     /// `@`
     At,
+    /// `..`
+    Range,
+    /// `<=`
+    EqLess,
+    /// `>=`
+    EqGreater,
+    /// `++`
+    Incr,
+    /// `--`
+    Decr,
+    /// `$$`
+    DoubleDollar,
 }
 
 impl Symbol {
@@ -126,6 +138,12 @@ impl std::fmt::Display for Symbol {
             Symbol::Pipe => "|",
             Symbol::Caret => "^",
             Symbol::At => "@",
+            Symbol::Range => "..",
+            Symbol::EqLess => "<=",
+            Symbol::EqGreater => ">=",
+            Symbol::Incr => "++",
+            Symbol::Decr => "++",
+            Symbol::DoubleDollar => "$$",
         };
         
         f.write_str(str)
@@ -171,6 +189,23 @@ impl TryFrom<char> for Symbol {
             '|' => Ok(Symbol::Pipe),
             '^' => Ok(Symbol::Caret),
             '@' => Ok(Symbol::At),
+            _ => Err(())
+        }
+    }
+}
+
+
+impl TryFrom<(char, char)> for Symbol {
+    type Error = ();
+
+    fn try_from(value: (char, char)) -> Result<Self, Self::Error> {
+        match value {
+            ('.', '.') => Ok(Symbol::Range),
+            ('<', '=') => Ok(Symbol::EqLess),
+            ('>', '=') => Ok(Symbol::EqGreater),
+            ('+', '+') => Ok(Symbol::Incr),
+            ('-', '-') => Ok(Symbol::Decr),
+            ('$', '$') => Ok(Symbol::DoubleDollar),
             _ => Err(())
         }
     }

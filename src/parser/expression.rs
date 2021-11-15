@@ -128,9 +128,6 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
             content: TokenContent::Symbol(Symbol::DollarSign), ..
         }) => match tokens.next() {
             Some(Token {
-                content: TokenContent::Symbol(Symbol::DollarSign), ..
-            }) => Expression::Reference(ReferenceRoot::Res),
-            Some(Token {
                 content: TokenContent::Literal(Literal::Str(s)), ..
             }) => Expression::Reference(ReferenceRoot::Local(s)),
             Some(Token {
@@ -139,6 +136,11 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
             Some(t) => return Err(ParseError::ExpectButGot("a local variable name".into(), format!("{}", t).into())),
             None => return Err(ParseError::ExpectButEnd("a local variable name")),
         },
+        
+        // Res Variable!
+        Some(Token {
+            content: TokenContent::Symbol(Symbol::DoubleDollar), ..
+        }) => Expression::Reference(ReferenceRoot::Res),
         
         // Doubledot? Invalid!
         Some(Token {
