@@ -3,7 +3,7 @@
 use super::*;
 
 fn chk(input: &str) -> Result<(), ParseError> {
-    let output = parse_command(&mut tokenize(input), None)?;
+    let output = parse_command(&mut groupenize(&mut tokenize(input), None), None)?;
     eprintln!("INPUT:  {},\t PARSED:  {:?}", input, output);
     Ok(())
 }
@@ -49,13 +49,13 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("tp @a @world.spawn")?;
     chk("tp @a 0 100 0 rel=@self")?;
     chk("for @a: tp [0 100 0]~$$")?;
-    chk("test 0..10")?;
-    chk("test (get1)..(get2)")?;
+    //chk("test 0..10")?;
+    //chk("test (get1)..(get2 $$)")?;
     Ok(())
 }
 
 #[test]
 #[should_panic]
-fn should_fail() {
+fn posarg_after_nomarg() {
     chk("test 1 a=2 3 b=4").expect("positional arguments cannot be written after nominal arguments");
 }

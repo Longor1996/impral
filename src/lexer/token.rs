@@ -60,6 +60,9 @@ pub enum TokenContent {
     /// A literal.
     Literal(Literal),
     
+    /// A group.
+    Group(Symbol, Vec<Token>),
+    
     /// The remainder.
     Remainder(String),
 }

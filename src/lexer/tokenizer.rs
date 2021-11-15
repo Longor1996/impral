@@ -11,6 +11,8 @@ pub trait TokenStream: Iterator<Item = Token> {}
 impl<T> TokenStream for T where T: Iterator<Item = Token> {}
 
 /// Creates an iterator of `Token`'s from the given string slice.
+/// 
+/// This does not create `Group`-tokens.
 pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
     
     let mut input = input.char_indices().peekmore();
@@ -235,5 +237,44 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         let remainder: String = input.clone().map(|(_, c)| c).collect();
         Some((index, index+remainder.len(), TokenContent::Remainder(remainder)).into())
         //panic!("Unable to parse token starting with '{}' at position {}", current, index)
+    }).peekable()
+}
+
+/// Find and stack groups from the given stream of tokens.
+pub fn groupenize(tokens: &mut PeekableTokenStream<impl TokenStream>, delimiter: Option<Symbol>) -> PeekableTokenStream<impl TokenStream + '_> {
+    std::iter::from_fn(move || {
+        match tokens.next() {
+            Some(Token {
+                content: TokenContent::Symbol(
+                    symbol @ (
+                        Symbol::ParenLeft |
+                        Symbol::CurlyLeft |
+                        Symbol::BraketLeft
+                    )
+                ),
+                start,
+                end
+            }) => {
+                let group: Vec<Token> = groupenize(tokens, Some(symbol)).collect();
+                let end = group.last().map(|t| t.end).unwrap_or_else(|| end+1);
+                let group = TokenContent::Group(symbol, group);
+                tokens.next();
+                Some(Token {
+                    content: group,
+                    start,
+                    end
+                })
+            },
+            Some(Token {
+                content: TokenContent::Symbol(
+                    symbol
+                ),
+                ..
+            }) if delimiter.map(|d| d == symbol).unwrap_or(false) => {
+                None // end of current group
+            },
+            Some(token) => Some(token),
+            None => None, // natural end
+        }
     }).peekable()
 }

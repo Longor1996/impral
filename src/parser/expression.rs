@@ -97,20 +97,24 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
             content: TokenContent::Literal(l), ..
         }) => Expression::Value(l),
         
-        // Parentheses? Parse a command!
+        // A group? Parse a subset!
         Some(Token {
-            content: TokenContent::Symbol(Symbol::ParenLeft), ..
-        }) => parse_command(tokens, Some(Symbol::ParenRight)).map(|i| i.into())?,
-        
-        // Brackets? Parse a list!
-        Some(Token {
-            content: TokenContent::Symbol(Symbol::BraketLeft), ..
-        }) => parse_list(tokens).map(|v| Expression::Structure(Structure::List(v)))?,
-        
-        // Curlies? Parse a map!
-        Some(Token {
-            content: TokenContent::Symbol(Symbol::CurlyLeft), ..
-        }) => parse_map(tokens).map(|d| Expression::Structure(Structure::Dict(d)))?,
+            content: TokenContent::Group(kind, subtokens), ..
+        }) => match kind {
+            Symbol::ParenLeft => parse_command(
+                &mut subtokens.into_iter().peekable(),
+                Some(Symbol::ParenRight)
+            ).map(|i| i.into())?,
+            
+            Symbol::BraketLeft => parse_list(
+                &mut subtokens.into_iter().peekable()
+            ).map(|l| Expression::Structure(Structure::List(l)))?,
+            
+            Symbol::CurlyLeft => parse_map(
+                &mut subtokens.into_iter().peekable()
+            ).map(|d| Expression::Structure(Structure::Dict(d)))?,
+            _ => unreachable!()
+        },
         
         // Global Variable!
         Some(Token {
@@ -304,7 +308,8 @@ pub fn parse_map(
                         let expr = parse_expression(tokens)?;
                         map.insert(key, expr);
                     },
-                    TokenContent::Literal(l) => return Err(ParseError::Unexpected(format!("literal {:?}", l).into()))
+                    TokenContent::Literal(l) => return Err(ParseError::Unexpected(format!("literal {:?}", l).into())),
+                    g @ TokenContent::Group(_, _) => return Err(ParseError::Unexpected(format!("group {:?}", g).into()))
                 };
             },
             None => return Err(ParseError::ExpectButEnd("end of list ']'")),

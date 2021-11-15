@@ -26,6 +26,9 @@ pub fn parse_command(
         TokenContent::Literal(Literal::Str(s)) => s,
         TokenContent::Literal(l)
             => return Err(ParseError::ExpectButGot("a command name".into(), format!("a {}", l.get_type_str()).into())),
+        
+        TokenContent::Group(_, _)
+            => return Err(ParseError::ExpectButGot("a command name".into(), "a group".to_string().into())),
     };
     
     // At this point, we have a name.
