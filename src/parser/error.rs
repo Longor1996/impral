@@ -23,7 +23,7 @@ pub enum ParseError {
     Unexpected(Cow<'static, str>),
     
     /// Expected one thing, but got another.
-    #[error("Expected {0}, but {1}")]
+    #[error("Expected {0}, but got {1}")]
     ExpectButGot(Cow<'static, str>, Cow<'static, str>),
     
     /// Positional args cannot be written after nominal args.

@@ -3,7 +3,15 @@
 use super::*;
 
 fn chk(input: &str) -> Result<(), ParseError> {
-    let output = parse_command(&mut groupenize(&mut tokenize(input), None), None)?;
+    let mut stream = tokenize(input);
+    let mut stream = groupenize(&mut stream, None);
+    let output = match parse_command(&mut stream, None) {
+        Ok(o) => o,
+        Err(err) => {
+            println!("{}", err);
+            return Err(err);
+        },
+    };
     eprintln!("INPUT:  {},\t PARSED:  {:?}", input, output);
     Ok(())
 }
