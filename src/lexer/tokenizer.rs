@@ -269,7 +269,7 @@ pub fn groupenize(tokens: &mut PeekableTokenStream<impl TokenStream>, delimiter:
                 start,
                 end
             }) => {
-                let group: Vec<Token> = groupenize(tokens, Some(symbol)).collect();
+                let group: Vec<Token> = groupenize(tokens, symbol.get_delimiter()).collect();
                 let end = group.last().map(|t| t.end).unwrap_or_else(|| end+1);
                 let group = TokenContent::Group(symbol, group);
                 tokens.next();
@@ -288,6 +288,8 @@ pub fn groupenize(tokens: &mut PeekableTokenStream<impl TokenStream>, delimiter:
                 None // end of current group
             },
             Some(token) => Some(token),
+            
+            // TODO: Check for unmatched delimiters by `if let None = delimiter`
             None => None, // natural end
         }
     }).peekable()

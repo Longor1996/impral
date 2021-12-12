@@ -164,6 +164,17 @@ impl Symbol {
             | Self::AngleRight
         )
     }
+    
+    /// Get the delimiter for the given symbol, or `None`.
+    pub fn get_delimiter(&self) -> Option<Symbol> {
+        match self {
+            Self::ParenLeft => Some(Self::ParenRight),
+            Self::BraketLeft => Some(Self::BraketRight),
+            Self::CurlyLeft => Some(Self::CurlyRight),
+            Self::AngleLeft => Some(Self::AngleRight),
+            _ => None
+        }
+    }
 }
 
 impl From<&Symbol> for CompactString {
