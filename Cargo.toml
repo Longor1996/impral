@@ -18,6 +18,8 @@ smallvec = "1.6.1"
 smartstring = "0.2.9"
 rustc-hash = "1.1.0"
 thiserror = "1.0.26"
+strum = "0.23.0"
+strum_macros = "0.23.0"
 
 [dependencies.tagged-box]
 version = "0.1.1"

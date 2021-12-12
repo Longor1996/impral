@@ -16,6 +16,7 @@ impl<T> TokenStream for T where T: Iterator<Item = Token> {}
 pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
     
     let mut input = input.char_indices().peekmore();
+    let mut encode = [0; 4*2];
     
     std::iter::from_fn(move || {
         // Skip any and all whitespace...
@@ -32,14 +33,27 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         
         let mut last_idx = index;
         
+        // Turn both the current char and the current with the next char into string slices.
+        let (currstr, peekstr) = {
+            let cl0 = current.encode_utf8(&mut encode).len();
+            let cl1 = input.peek()
+                .map(|c|c.1)
+                .unwrap_or(' ')
+                .encode_utf8(&mut encode[cl0..]).len();
+            (
+                std::str::from_utf8(&encode[..(cl0)]).unwrap(),
+                std::str::from_utf8(&encode[..(cl0+cl1)]).unwrap()
+            )
+        };
+        
         // Check for symbol pairings...
-        if let Ok(symbol) = Symbol::try_from((current, input.peek().map(|c|c.1).unwrap_or(' '))) {
-            input.next(); // drop the next char
+        if let Ok(symbol) = peekstr.parse::<Symbol>() {
+            input.next(); // drop the next char too
             return Some((index, index+2, symbol).into());
         }
         
         // Check for individual symbols...
-        if let Ok(symbol) = Symbol::try_from(current) {
+        if let Ok(symbol) = currstr.parse::<Symbol>() {
             // '+' and '-' are handled elsewhere...
             if ! (symbol == Symbol::Plus || symbol == Symbol::Dash) {
                 // ...everything else is immediately turned into a token.

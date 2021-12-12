@@ -1,79 +1,146 @@
 //! Symbol representation.
 
-use std::convert::TryFrom;
 use std::fmt::Write;
 use smartstring::alias::CompactString;
+use strum_macros::{Display, EnumString, IntoStaticStr};
 
 /// A enum of the set of known symbols.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Display, EnumString, IntoStaticStr)]
 pub enum Symbol {
     /// `(`
+    #[strum(to_string="(")]
     ParenLeft,
+    
     /// `)`
+    #[strum(to_string=")")]
     ParenRight,
+    
     /// `[`
+    #[strum(to_string="[")]
     BraketLeft,
+    
     /// `]`
+    #[strum(to_string="]")]
     BraketRight,
+    
     /// `{`
+    #[strum(to_string="{")]
     CurlyLeft,
+    
     /// `}`
+    #[strum(to_string="}")]
     CurlyRight,
+    
     /// `<`
+    #[strum(to_string="<")]
     AngleLeft,
+    
     /// `>`
+    #[strum(to_string=">")]
     AngleRight,
+    
     /// `+`
+    #[strum(to_string="+")]
     Plus,
+    
     /// `-`
+    #[strum(to_string="-")]
     Dash,
+    
     /// `*`
+    #[strum(to_string="*")]
     Star,
+    
     /// `#`
+    #[strum(to_string="#")]
     Hash,
+    
     /// `/`
+    #[strum(to_string="/")]
     Slash,
+    
     /// `~`
+    #[strum(to_string="~")]
     Tilde,
+    
     /// `,`
+    #[strum(to_string=",")]
     Comma,
+    
     /// `.`
+    #[strum(to_string=".")]
     Dot,
+    
     /// `:`
+    #[strum(to_string=":")]
     DoubleDot,
+    
     /// `;`
+    #[strum(to_string=";")]
     Semicolon,
+    
     /// `_`
+    #[strum(to_string="_")]
     Underscore,
+    
     /// `=`
+    #[strum(to_string="=")]
     EqualSign,
+    
     /// `?`
+    #[strum(to_string="?")]
     QuestionMark,
+    
     /// `!`
+    #[strum(to_string="!")]
     ExclamationMark,
+    
     /// `$`
+    #[strum(to_string="$")]
     DollarSign,
+    
     /// `%`
+    #[strum(to_string="%")]
     Percentage,
+    
     /// `&`
+    #[strum(to_string="&")]
     Ampersand,
+    
     /// `|`
+    #[strum(to_string="|")]
     Pipe,
+    
     /// `^`
+    #[strum(to_string="^")]
     Caret,
+    
     /// `@`
+    #[strum(to_string="@")]
     At,
+    
     /// `..`
+    #[strum(to_string="..")]
     Range,
+    
     /// `<=`
+    #[strum(to_string="<=")]
     EqLess,
+    
     /// `>=`
+    #[strum(to_string=">=")]
     EqGreater,
+    
     /// `++`
+    #[strum(to_string="++")]
     Incr,
+    
     /// `--`
+    #[strum(to_string="--")]
     Decr,
+    
     /// `$$`
+    #[strum(to_string="$$")]
     DoubleDollar,
 }
 
@@ -107,106 +174,8 @@ impl From<&Symbol> for CompactString {
     }
 }
 
-impl std::fmt::Display for Symbol {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let str = match self {
-            Symbol::ParenLeft => "(",
-            Symbol::ParenRight => ")",
-            Symbol::BraketLeft => "[",
-            Symbol::BraketRight => "]",
-            Symbol::CurlyLeft => "{",
-            Symbol::CurlyRight => "}",
-            Symbol::AngleLeft => "<",
-            Symbol::AngleRight => ">",
-            Symbol::Plus => "+",
-            Symbol::Dash => "-",
-            Symbol::Star => "*",
-            Symbol::Hash => "#",
-            Symbol::Slash => "/",
-            Symbol::Tilde => "~",
-            Symbol::Comma => ",",
-            Symbol::Dot => ".",
-            Symbol::DoubleDot => ":",
-            Symbol::Semicolon => ";",
-            Symbol::Underscore => "_",
-            Symbol::EqualSign => "=",
-            Symbol::QuestionMark => "?",
-            Symbol::ExclamationMark => "!",
-            Symbol::DollarSign => "$",
-            Symbol::Percentage => "%",
-            Symbol::Ampersand => "&",
-            Symbol::Pipe => "|",
-            Symbol::Caret => "^",
-            Symbol::At => "@",
-            Symbol::Range => "..",
-            Symbol::EqLess => "<=",
-            Symbol::EqGreater => ">=",
-            Symbol::Incr => "++",
-            Symbol::Decr => "++",
-            Symbol::DoubleDollar => "$$",
-        };
-        
-        f.write_str(str)
-    }
-}
-
 impl std::fmt::Debug for Symbol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, " {} ", self)
-    }
-}
-
-impl TryFrom<char> for Symbol {
-    type Error = ();
-
-    fn try_from(value: char) -> Result<Self, Self::Error> {
-        match value {
-            '(' => Ok(Symbol::ParenLeft),
-            ')' => Ok(Symbol::ParenRight),
-            '[' => Ok(Symbol::BraketLeft),
-            ']' => Ok(Symbol::BraketRight),
-            '{' => Ok(Symbol::CurlyLeft),
-            '}' => Ok(Symbol::CurlyRight),
-            '<' => Ok(Symbol::AngleLeft),
-            '>' => Ok(Symbol::AngleRight),
-            '+' => Ok(Symbol::Plus),
-            '-' => Ok(Symbol::Dash),
-            '*' => Ok(Symbol::Star),
-            '/' => Ok(Symbol::Slash),
-            '~' => Ok(Symbol::Tilde),
-            '#' => Ok(Symbol::Hash),
-            ',' => Ok(Symbol::Comma),
-            '.' => Ok(Symbol::Dot),
-            ':' => Ok(Symbol::DoubleDot),
-            ';' => Ok(Symbol::Semicolon),
-            '_' => Ok(Symbol::Underscore),
-            '=' => Ok(Symbol::EqualSign),
-            '?' => Ok(Symbol::QuestionMark),
-            '!' => Ok(Symbol::ExclamationMark),
-            '$' => Ok(Symbol::DollarSign),
-            '%' => Ok(Symbol::Percentage),
-            '&' => Ok(Symbol::Ampersand),
-            '|' => Ok(Symbol::Pipe),
-            '^' => Ok(Symbol::Caret),
-            '@' => Ok(Symbol::At),
-            _ => Err(())
-        }
-    }
-}
-
-
-impl TryFrom<(char, char)> for Symbol {
-    type Error = ();
-
-    fn try_from(value: (char, char)) -> Result<Self, Self::Error> {
-        match value {
-            ('.', '.') => Ok(Symbol::Range),
-            ('<', '=') => Ok(Symbol::EqLess),
-            ('>', '=') => Ok(Symbol::EqGreater),
-            ('+', '+') => Ok(Symbol::Incr),
-            ('-', '-') => Ok(Symbol::Decr),
-            ('$', '$') => Ok(Symbol::DoubleDollar),
-            _ => Err(())
-        }
     }
 }
