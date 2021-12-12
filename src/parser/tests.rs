@@ -45,6 +45,7 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("++ 1 2 3")?;
     chk("-- 1 2 3")?;
     chk("chk $$")?;
+    chk("ß ßß")?;
     chk("<= 1 2 3")?;
     chk(">= 1 2 3")?;
     chk("test 1.234 2.345 1.99999 0.000001")?;

@@ -62,7 +62,7 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         }
         
         // Check for start of bareword...
-        if current.is_ascii_alphabetic() || current == '_' {
+        if current.is_alphabetic() || current == '_' {
             let mut buffer = CompactString::new();
             buffer.push(current);
             
