@@ -82,25 +82,34 @@ impl std::fmt::Debug for ReferenceRoot {
 
 /// Parses a `TokenStream` into an AST.
 pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> Result<Expression, ParseError> {
-    let mut expr = match tokens.next() {
+    
+    
+    let token = match tokens.next() {
         // Empty case? Error!
         None => return Err(ParseError::Empty),
-        
-        // Remainder? Error!
-        Some(Token {
-            content: TokenContent::Remainder(r),
-            start, end: _
-        }) => return Err(ParseError::Unrecognized(start, r)),
-        
+        Some(t) => t
+    };
+    
+    // Remainder? Error!
+    if let Token {
+        content: TokenContent::Remainder(r),
+        start, end: _
+    } = token {
+        return Err(ParseError::Unrecognized(start, r))
+    };
+    
+    let mut expr = if let Ok(command_name) = token.try_into_command_name() {
+        parse_command_body(command_name, tokens, None)?.into()
+    } else {match token {
         // Literal? Pass thru directly!
-        Some(Token {
+        Token {
             content: TokenContent::Literal(l), ..
-        }) => Expression::Value(l),
+        } => Expression::Value(l),
         
         // A group? Parse a subset!
-        Some(Token {
+        Token {
             content: TokenContent::Group(kind, subtokens), ..
-        }) => match kind {
+        } => match kind {
             Symbol::ParenLeft => parse_command(
                 &mut subtokens.into_iter().peekable(),
                 Some(Symbol::ParenRight)
@@ -117,9 +126,9 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
         },
         
         // Global Variable!
-        Some(Token {
+        Token {
             content: TokenContent::Symbol(Symbol::At), ..
-        }) => match tokens.next() {
+        } => match tokens.next() {
             Some(Token {
                 content: TokenContent::Literal(Literal::Str(s)), ..
             }) => Expression::Reference(ReferenceRoot::Global(s)),
@@ -128,9 +137,9 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
         },
         
         // Local Variable!
-        Some(Token {
+        Token {
             content: TokenContent::Symbol(Symbol::DollarSign), ..
-        }) => match tokens.next() {
+        } => match tokens.next() {
             Some(Token {
                 content: TokenContent::Literal(Literal::Str(s)), ..
             }) => Expression::Reference(ReferenceRoot::Local(s)),
@@ -142,22 +151,25 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
         },
         
         // Res Variable!
-        Some(Token {
+        Token {
             content: TokenContent::Symbol(Symbol::DoubleDollar), ..
-        }) => Expression::Reference(ReferenceRoot::Res),
+        } => Expression::Reference(ReferenceRoot::Res),
         
         // Doubledot? Invalid!
-        Some(Token {
+        Token {
             content: TokenContent::Symbol(Symbol::DoubleDot), ..
-        }) => return Err(ParseError::Unexpected("double-dot in expression".into())),
+        } => return Err(ParseError::Unexpected("double-dot in expression".into())),
         
         // Symbols means more complex parsing...
-        Some(Token {
+        Token {
             content: TokenContent::Symbol(s), ..
-        }) => {
+        } => {
             return Err(ParseError::Unexpected(format!("symbol in expression: {}", s).into()))
-        }
-    };
+        },
+        
+        Token {content, ..}
+        => return Err(ParseError::Unexpected(format!("token content: {:?}", content).into()))
+    }};
     
     if let Some(token) = tokens.peek() {
         match token {
