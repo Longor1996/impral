@@ -7,32 +7,23 @@ pub fn parse_command(
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     terminator: Option<Symbol>
 ) -> Result<Invoke, ParseError> {
-    
     let name = match tokens.next() {
         Some(n) => n,
         None => return Err(ParseError::ExpectButEnd("a command name")),
     };
     
-    let name: CompactString = match name.content {
-        TokenContent::Remainder(r )
-            => return Err(ParseError::Unrecognized(name.start, r)),
-        
-        // Every kind of symbol BUT delimiters can be a command name...
-        TokenContent::Symbol(s ) if s.is_delimiter()
-            => return Err(ParseError::ExpectButGot("a command name".into(), format!("a '{}'", s).into())),
-        TokenContent::Symbol(s) => (&s).into(),
-        
-        // Every kind of literal BUT strings cannot be a command name...
-        TokenContent::Literal(Literal::Str(s)) => s,
-        TokenContent::Literal(l)
-            => return Err(ParseError::ExpectButGot("a command name".into(), format!("a {}", l.get_type_str()).into())),
-        
-        TokenContent::Group(_, _)
-            => return Err(ParseError::ExpectButGot("a command name".into(), "a group".to_string().into())),
-    };
+    let name: CompactString = name.try_into_command_name()?;
     
     // At this point, we have a name.
-    
+    parse_command_body(name, tokens, terminator)
+}
+
+/// Parses the stream of tokens into a command-expression.
+pub fn parse_command_body(
+    name: CompactString,
+    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    terminator: Option<Symbol>
+) -> Result<Invoke, ParseError> {
     let mut cmd = Invoke {
         name,
         pos_args: Default::default(),

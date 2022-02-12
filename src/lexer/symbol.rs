@@ -146,6 +146,27 @@ pub enum Symbol {
 
 impl Symbol {
     /// Is the symbol a delimiter?
+    pub fn is_operator(&self) -> bool {
+        matches!(self
+            , Self::EqualSign
+            | Self::EqGreater
+            | Self::EqLess
+            | Self::AngleLeft
+            | Self::AngleRight
+            | Self::Plus
+            | Self::Dash
+            | Self::Star
+            | Self::Incr
+            | Self::Decr
+            | Self::Slash
+            | Self::Tilde
+            | Self::Caret
+            | Self::QuestionMark
+            | Self::ExclamationMark
+        )
+    }
+    
+    /// Is the symbol a delimiter?
     pub fn is_delimiter(&self) -> bool {
         matches!(self
             , Self::ParenLeft | Self::ParenRight

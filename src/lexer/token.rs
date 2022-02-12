@@ -1,5 +1,6 @@
 //! Token representation.
 
+use crate::parser::ParseError;
 use super::{Literal, Symbol};
 
 /// An individual token.
@@ -65,4 +66,29 @@ pub enum TokenContent {
     
     /// The remainder.
     Remainder(String),
+}
+
+impl Token {
+    
+    /// Try to convert the given TokenContent into a command-name...
+    pub fn try_into_command_name(&self) -> Result<smartstring::alias::CompactString, ParseError> {
+        match self.content.clone() {
+            TokenContent::Remainder(r )
+                => Err(ParseError::Unrecognized(self.start, r)),
+            
+            // Every kind of symbol BUT delimiters can be a command name...
+            TokenContent::Symbol(s ) if !s.is_operator()
+                => Err(ParseError::ExpectButGot("a command name".into(), format!("a '{}'", s).into())),
+            TokenContent::Symbol(s) => Ok((&s).into()),
+            
+            // Every kind of literal BUT strings cannot be a command name...
+            TokenContent::Literal(Literal::Str(s)) => Ok(s),
+            TokenContent::Literal(l)
+                => Err(ParseError::ExpectButGot("a command name".into(), format!("a {}", l.get_type_str()).into())),
+            
+            TokenContent::Group(_, _)
+                => Err(ParseError::ExpectButGot("a command name".into(), "a group".to_string().into())),
+        }
+    }
+    
 }
