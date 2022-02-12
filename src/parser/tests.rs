@@ -69,6 +69,32 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("for @a: tp [0 100 0]~$$")?;
     //chk("test 0..10")?;
     //chk("test (get1)..(get2 $$)")?;
+    
+    chk("alias FOO (BAR ARG)")?;
+    chk("alias FOO: BAR ARG")?;
+    chk("e tag=FOO|del")?;
+    
+    chk("e tag=FOO|del")?;
+    chk("e in=(box 0 0 0 8 8 8)|del")?;
+    chk("e is=item|del")?;
+    chk("$$|?le $.health 1%|heal 10% 5s")?;
+    
+    chk("v fill (box -8 -8 -8 +8 +8 +8|offset $$) air")?;
+    chk("v|raytrace $$ 10m|v set $ air")?;
+    chk("v|raymarch $$ 10m|?is solid|v set $ glass")?;
+    
+    chk("raytrace $$ 10m elod=sphere")?;
+    chk("raytrace $$ 10m elod=bounds")?;
+    chk("raytrace $$ 10m elod=voxels")?;
+    chk("raytrace $$ 10m elod=hitbox")?;
+    chk("raytrace $$ 10m elod=phybox")?;
+    
+    chk("e|sphere $ 0.5m|raytrace $$ max|?is marker|del")?;
+    
+    chk("tp 0 0 0 motion=0")?;
+    chk("move forward for=1s")?;
+    chk("set $$.motion: * 0.5 $")?;
+    
     Ok(())
 }
 

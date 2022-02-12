@@ -16,6 +16,10 @@ pub enum Expression {
     
     /// A command.
     Invoke(Box<Invoke>),
+    
+    // TODO: Make pipes a language structure!
+    // /// A pipe.
+    // Pipe(Box<Invoke>),
 }
 
 /// A (data-)structure node of an abstract syntax tree.
