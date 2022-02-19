@@ -2,6 +2,28 @@
 
 use super::*;
 
+
+/// Try to convert the given TokenContent into a command-name...
+pub fn try_into_command_name(token: &Token) -> Result<smartstring::alias::CompactString, ParseError> {
+    match token.content.clone() {
+        TokenContent::Remainder(r )
+            => Err(ParseError::Unrecognized(token.start, r)),
+        
+        // Every kind of symbol BUT delimiters can be a command name...
+        TokenContent::Symbol(s ) if !s.is_operator()
+            => Err(ParseError::ExpectButGot("a command name".into(), format!("a '{}'", s).into())),
+        TokenContent::Symbol(s) => Ok((&s).into()),
+        
+        // Every kind of literal BUT strings cannot be a command name...
+        TokenContent::Literal(Literal::Str(s)) => Ok(s),
+        TokenContent::Literal(l)
+            => Err(ParseError::ExpectButGot("a command name".into(), format!("a {}", l.get_type_str()).into())),
+        
+        TokenContent::Group(_, _)
+            => Err(ParseError::ExpectButGot("a command name".into(), "a group".to_string().into())),
+    }
+}
+
 /// Parses the stream of tokens into a command-expression.
 pub fn parse_command(
     tokens: &mut PeekableTokenStream<impl TokenStream>,
@@ -12,7 +34,7 @@ pub fn parse_command(
         None => return Err(ParseError::ExpectButEnd("a command name")),
     };
     
-    let name: CompactString = name.try_into_command_name()?;
+    let name: CompactString = try_into_command_name(&name)?;
     
     // At this point, we have a name.
     parse_command_body(name, tokens, terminator)

@@ -192,7 +192,7 @@ pub fn parse_item(
     
     // Is it a command?
     if first {
-        if let Ok(command_name) = token.try_into_command_name() {
+        if let Ok(command_name) = try_into_command_name(&token) {
             return parse_command_body(command_name, tokens, None).map(|i|i.into())
         }
     }
