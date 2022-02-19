@@ -5,11 +5,19 @@ use super::*;
 fn chk(input: &str) -> Result<(), ParseError> {
     let mut stream = tokenize(input);
     let mut stream = groupenize(&mut stream, None);
-    let output = match parse_expression(&mut stream, true) {
+    let output = parse_expression(&mut stream, true);
+    
+    if let Some(token) = stream.peek() {
+        let tokens = groupenize(&mut tokenize(input), None).collect::<Vec<_>>();
+        return Err(ParseError::Unexpected(format!("Failed to completely parse `{input}`; next token is {token}; all tokens {tokens:?}").into()))
+    }
+    
+    let output = match output {
         Ok(o) => o,
         Err(err) => {
             println!("Failed to parse: {input}");
             println!("Because: {err}");
+            println!("Tokens: {:?}", groupenize(&mut tokenize(input), None).collect::<Vec<_>>());
             return Err(err);
         },
     };

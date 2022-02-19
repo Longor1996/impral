@@ -272,7 +272,7 @@ pub fn groupenize(tokens: &mut PeekableTokenStream<impl TokenStream>, delimiter:
                 let group: Vec<Token> = groupenize(tokens, symbol.get_delimiter()).collect();
                 let end = group.last().map(|t| t.end).unwrap_or_else(|| end+1);
                 let group = TokenContent::Group(symbol, group);
-                tokens.next();
+                //tokens.next();
                 Some(Token {
                     content: group,
                     start,
