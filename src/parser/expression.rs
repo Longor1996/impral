@@ -86,94 +86,8 @@ impl std::fmt::Debug for ReferenceRoot {
 
 /// Parses a `TokenStream` into an AST.
 pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> Result<Expression, ParseError> {
-    
-    
-    let token = match tokens.next() {
-        // Empty case? Error!
-        None => return Err(ParseError::Empty),
-        Some(t) => t
-    };
-    
-    // Remainder? Error!
-    if let Token {
-        content: TokenContent::Remainder(r),
-        start, end: _
-    } = token {
-        return Err(ParseError::Unrecognized(start, r))
-    };
-    
-    let mut expr = if let Ok(command_name) = token.try_into_command_name() {
-        parse_command_body(command_name, tokens, None)?.into()
-    } else {match token {
-        // Literal? Pass thru directly!
-        Token {
-            content: TokenContent::Literal(l), ..
-        } => Expression::Value(l),
-        
-        // A group? Parse a subset!
-        Token {
-            content: TokenContent::Group(kind, subtokens), ..
-        } => match kind {
-            Symbol::ParenLeft => parse_command(
-                &mut subtokens.into_iter().peekable(),
-                Some(Symbol::ParenRight)
-            ).map(|i| i.into())?,
-            
-            Symbol::BraketLeft => parse_list(
-                &mut subtokens.into_iter().peekable()
-            ).map(|l| Expression::Structure(Structure::List(l)))?,
-            
-            Symbol::CurlyLeft => parse_map(
-                &mut subtokens.into_iter().peekable()
-            ).map(|d| Expression::Structure(Structure::Dict(d)))?,
-            _ => unreachable!()
-        },
-        
-        // Global Variable!
-        Token {
-            content: TokenContent::Symbol(Symbol::At), ..
-        } => match tokens.next() {
-            Some(Token {
-                content: TokenContent::Literal(Literal::Str(s)), ..
-            }) => Expression::Reference(ReferenceRoot::Global(s)),
-            Some(t) => return Err(ParseError::ExpectButGot("a global variable name".into(), format!("{}", t).into())),
-            None => return Err(ParseError::ExpectButEnd("a global variable name")),
-        },
-        
-        // Local Variable!
-        Token {
-            content: TokenContent::Symbol(Symbol::DollarSign), ..
-        } => match tokens.next() {
-            Some(Token {
-                content: TokenContent::Literal(Literal::Str(s)), ..
-            }) => Expression::Reference(ReferenceRoot::Local(s)),
-            Some(Token {
-                content: TokenContent::Literal(Literal::Int(i)), ..
-            }) => Expression::Reference(ReferenceRoot::Local(i.to_string().into())),
-            Some(t) => return Err(ParseError::ExpectButGot("a local variable name".into(), format!("{}", t).into())),
-            None => return Err(ParseError::ExpectButEnd("a local variable name")),
-        },
-        
-        // Res Variable!
-        Token {
-            content: TokenContent::Symbol(Symbol::DoubleDollar), ..
-        } => Expression::Reference(ReferenceRoot::Res),
-        
-        // Doubledot? Invalid!
-        Token {
-            content: TokenContent::Symbol(Symbol::DoubleDot), ..
-        } => return Err(ParseError::Unexpected("double-dot in expression".into())),
-        
-        // Symbols means more complex parsing...
-        Token {
-            content: TokenContent::Symbol(s), ..
-        } => {
-            return Err(ParseError::Unexpected(format!("symbol in expression: {}", s).into()))
-        },
-        
-        Token {content, ..}
-        => return Err(ParseError::Unexpected(format!("token content: {:?}", content).into()))
-    }};
+    // Try to parse an expression item...
+    let mut expr = parse_item(tokens)?;
     
     if let Some(token) = tokens.peek() {
         match token {
@@ -251,6 +165,107 @@ pub fn parse_expression(tokens: &mut PeekableTokenStream<impl TokenStream>) -> R
     }
     
     Ok(expr)
+}
+
+/// Parses a `TokenStream` into an item (piece of an expression).
+pub fn parse_item(
+    tokens: &mut PeekableTokenStream<impl TokenStream>
+) -> Result<Expression, ParseError> {
+    // Fetch the next token...
+    let token = match tokens.next() {
+        // Empty case? Error!
+        None => return Err(ParseError::Empty),
+        Some(t) => t
+    };
+    
+    // Remainder? Error!
+    if let Token {
+        content: TokenContent::Remainder(r),
+        start, end: _
+    } = token {
+        return Err(ParseError::Unrecognized(start, r))
+    };
+    
+    // Is it a command?
+    if let Ok(command_name) = token.try_into_command_name() {
+        return parse_command_body(command_name, tokens, None).map(|i|i.into())
+    }
+    
+    Ok(match token {
+        // Literal? Pass thru directly!
+        Token {
+            content: TokenContent::Literal(l), ..
+        } => Expression::Value(l),
+        
+        // A group? Parse a subset!
+        Token {
+            content: TokenContent::Group(kind, subtokens), ..
+        } => match kind {
+            Symbol::ParenLeft => parse_command(
+                &mut subtokens.into_iter().peekable(),
+                Some(Symbol::ParenRight)
+            ).map(|i| i.into())?,
+            
+            Symbol::BraketLeft => parse_list(
+                &mut subtokens.into_iter().peekable()
+            ).map(|l| Expression::Structure(Structure::List(l)))?,
+            
+            Symbol::CurlyLeft => parse_map(
+                &mut subtokens.into_iter().peekable()
+            ).map(|d| Expression::Structure(Structure::Dict(d)))?,
+            _ => unreachable!()
+        },
+        
+        // Global Variable!
+        Token {
+            content: TokenContent::Symbol(Symbol::At), ..
+        } => match tokens.next() {
+            Some(Token {
+                content: TokenContent::Literal(Literal::Str(s)), ..
+            }) => Expression::Reference(ReferenceRoot::Global(s)),
+            
+            Some(t) => return Err(ParseError::ExpectButGot("a global variable name".into(), format!("{}", t).into())),
+            
+            None => return Err(ParseError::ExpectButEnd("a global variable name")),
+        },
+        
+        // Local Variable!
+        Token {
+            content: TokenContent::Symbol(Symbol::DollarSign), ..
+        } => match tokens.next() {
+            Some(Token {
+                content: TokenContent::Literal(Literal::Str(s)), ..
+            }) => Expression::Reference(ReferenceRoot::Local(s)),
+            
+            Some(Token {
+                content: TokenContent::Literal(Literal::Int(i)), ..
+            }) => Expression::Reference(ReferenceRoot::Local(i.to_string().into())),
+            
+            Some(t) => return Err(ParseError::ExpectButGot("a local variable name".into(), format!("{}", t).into())),
+            
+            None => return Err(ParseError::ExpectButEnd("a local variable name")),
+        },
+        
+        // Res Variable!
+        Token {
+            content: TokenContent::Symbol(Symbol::DoubleDollar), ..
+        } => Expression::Reference(ReferenceRoot::Res),
+        
+        // Doubledot? Invalid!
+        Token {
+            content: TokenContent::Symbol(Symbol::DoubleDot), ..
+        } => return Err(ParseError::Unexpected("double-dot in expression".into())),
+        
+        // Symbols means more complex parsing...
+        Token {
+            content: TokenContent::Symbol(s), ..
+        } => {
+            return Err(ParseError::Unexpected(format!("symbol in expression: {}", s).into()))
+        },
+        
+        Token {content, ..}
+        => return Err(ParseError::Unexpected(format!("token content: {:?}", content).into()))
+    })
 }
 
 /// Parses the stream of tokens into a list.
