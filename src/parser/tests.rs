@@ -8,10 +8,8 @@ fn chk(input: &str) -> Result<(), ParseError> {
     let output = match parse_expression(&mut stream, true) {
         Ok(o) => o,
         Err(err) => {
-            println!("Failed to parse:");
-            println!("  {input}");
-            println!("Because:");
-            println!("  {err}");
+            println!("Failed to parse: {input}");
+            println!("Because: {err}");
             return Err(err);
         },
     };

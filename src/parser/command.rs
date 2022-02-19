@@ -118,7 +118,7 @@ pub fn parse_command_body(
             None => break, // natural end of command, due to EOS.
             
             // Attempt parsing arguments...
-            Some(_) => {
+            Some(t) => {
                 // ...starting with what may just be a expression...
                 let expr = parse_expression(tokens, false)?;
                 
@@ -144,7 +144,7 @@ pub fn parse_command_body(
                     no_more_pos_args = true;
                 } else {
                     if no_more_pos_args {
-                        return Err(ParseError::PosArgAfterNomArg(0))
+                        return Err(ParseError::PosArgAfterNomArg(t.start))
                     }
                     
                     // Don't care, push arg, go to next iter.
