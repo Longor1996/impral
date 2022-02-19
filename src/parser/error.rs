@@ -27,6 +27,6 @@ pub enum ParseError {
     ExpectButGot(Cow<'static, str>, Cow<'static, str>),
     
     /// Positional args cannot be written after nominal args.
-    #[error("Positional args cannot be written after nominal args")]
-    PosArgAfterNomArg,
+    #[error("Positional args cannot be written after nominal args at {0}")]
+    PosArgAfterNomArg(usize),
 }

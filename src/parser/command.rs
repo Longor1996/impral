@@ -120,38 +120,35 @@ pub fn parse_command_body(
             // Attempt parsing arguments...
             Some(_) => {
                 // ...starting with what may just be a expression...
-                let expr = parse_expression(tokens)?;
+                let expr = parse_expression(tokens, false)?;
                 
-                match tokens.peek().cloned() {
-                    Some(Token {
-                        content: TokenContent::Symbol(Symbol::EqualSign), ..
-                    }) => {
-                        // (l)expr into key
-                        let lexpr = match expr {
-                            Expression::Value(val) => match val {
-                                Literal::Str(s) => s,
-                                val => return Err(ParseError::ExpectButGot("a parameter name".into(), format!("{:?}", val).into())),
-                            },
-                            _ => return Err(ParseError::ExpectButGot("a parameter name".into(), "a symbol or command".into())),
-                        };
-                        
-                        // consume the '='
-                        drop(tokens.next());
-                        
-                        // parse value
-                        let rexpr = parse_expression(tokens)?;
-                        
-                        cmd.nom_args.insert(lexpr, rexpr);
-                        no_more_pos_args = true;
-                    },
-                    _ => {
-                        if no_more_pos_args {
-                            return Err(ParseError::PosArgAfterNomArg)
-                        }
-                        
-                        // Don't care, push arg, go to next iter.
-                        cmd.pos_args.push(expr);
-                    },
+                if let Some(Token {
+                    content: TokenContent::Symbol(Symbol::EqualSign), ..
+                }) = tokens.peek() {
+                    // (l)expr into key
+                    let lexpr = match expr {
+                        Expression::Value(val) => match val {
+                            Literal::Str(s) => s,
+                            val => return Err(ParseError::ExpectButGot("a parameter name".into(), format!("{:?}", val).into())),
+                        },
+                        _ => return Err(ParseError::ExpectButGot("a parameter name".into(), "a symbol or command".into())),
+                    };
+                    
+                    // consume the '='
+                    drop(tokens.next());
+                    
+                    // parse value
+                    let rexpr = parse_expression(tokens, false)?;
+                    
+                    cmd.nom_args.insert(lexpr, rexpr);
+                    no_more_pos_args = true;
+                } else {
+                    if no_more_pos_args {
+                        return Err(ParseError::PosArgAfterNomArg(0))
+                    }
+                    
+                    // Don't care, push arg, go to next iter.
+                    cmd.pos_args.push(expr);
                 }
             },
         };

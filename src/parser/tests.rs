@@ -5,7 +5,7 @@ use super::*;
 fn chk(input: &str) -> Result<(), ParseError> {
     let mut stream = tokenize(input);
     let mut stream = groupenize(&mut stream, None);
-    let output = match parse_expression(&mut stream) {
+    let output = match parse_expression(&mut stream, true) {
         Ok(o) => o,
         Err(err) => {
             println!("Failed to parse:");
