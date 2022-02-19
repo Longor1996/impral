@@ -8,7 +8,10 @@ fn chk(input: &str) -> Result<(), ParseError> {
     let output = match parse_expression(&mut stream) {
         Ok(o) => o,
         Err(err) => {
-            println!("{}", err);
+            println!("Failed to parse:");
+            println!("  {input}");
+            println!("Because:");
+            println!("  {err}");
             return Err(err);
         },
     };
@@ -72,7 +75,6 @@ fn should_succeed() -> Result<(), ParseError> {
     
     chk("alias FOO (BAR ARG)")?;
     chk("alias FOO: BAR ARG")?;
-    chk("e tag=FOO|del")?;
     
     chk("e tag=FOO|del")?;
     chk("e in=(box 0 0 0 8 8 8)|del")?;
