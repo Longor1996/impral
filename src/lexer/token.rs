@@ -1,6 +1,5 @@
 //! Token representation.
 
-use crate::parser::ParseError;
 use super::{Literal, Symbol};
 
 /// An individual token.

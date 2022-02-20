@@ -7,17 +7,17 @@ fn chk(input: &str) -> Result<(), ParseError> {
     let mut stream = groupenize(&mut stream, None);
     let output = parse_expression(&mut stream, true);
     
-    if let Some(token) = stream.peek() {
-        let tokens = groupenize(&mut tokenize(input), None).collect::<Vec<_>>();
-        return Err(ParseError::Unexpected(format!("Failed to completely parse `{input}`; next token is {token}; all tokens {tokens:?}").into()))
-    }
-    
     let output = match output {
         Ok(o) => o,
         Err(err) => {
             println!("Failed to parse: {input}");
             println!("Because: {err}");
             println!("Tokens: {:?}", groupenize(&mut tokenize(input), None).collect::<Vec<_>>());
+            
+            if let Some(token) = stream.peek() {
+                println!("Next token: {token}");
+            }
+            
             return Err(err);
         },
     };
@@ -85,7 +85,7 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("e tag=FOO|del")?;
     chk("e in=(box 0 0 0 8 8 8)|del")?;
     chk("e is=item|del")?;
-    chk("$$|?le $.health 1%|heal 10% 5s")?;
+    chk("$$|?le $.health 10|heal 10 5")?;
     
     chk("v fill (box -8 -8 -8 +8 +8 +8|offset $$) air")?;
     chk("v|raytrace $$ 10m|v set $ air")?;
@@ -100,7 +100,7 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("e|sphere $ 0.5m|raytrace $$ max|?is marker|del")?;
     
     chk("tp 0 0 0 motion=0")?;
-    chk("move forward for=1s")?;
+    chk("move forward for=1")?;
     chk("set $$.motion: * 0.5 $")?;
     
     Ok(())

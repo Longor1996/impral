@@ -104,43 +104,13 @@ pub fn parse_command_body(
             Some(Token {
                 content: TokenContent::Symbol(Symbol::Pipe), ..
             }) => {
-                let previous = std::mem::replace(&mut cmd, Invoke {
-                    name: "pipe".into(),
-                    pos_args: Default::default(),
-                    nom_args: Default::default(),
-                });
-                
-                cmd.pos_args.push(previous.into());
-                
-                // parse further commands as long as there are pipe symbols
-                while let Some(Token { content: TokenContent::Symbol(Symbol::Pipe), .. }) = tokens.peek() {
-                    drop(tokens.next()); // drop the pipe symbol
-                    
-                    if tokens.peek().is_none() {
-                        return Err(ParseError::ExpectButEnd("another command in the pipe"));
-                    }
-                    
-                    if let Some(Token { content: TokenContent::Symbol(Symbol::QuestionMark), .. }) = tokens.peek() {
-                        drop(tokens.next()); // drop the question-mark
-                    } else {
-                        cmd.pos_args.push(Invoke {
-                            name: "nonull".into(),
-                            pos_args: smallvec![Expression::Reference(ReferenceRoot::Res)],
-                            ..Default::default()
-                        }.into());
-                    }
-                    
-                    let subcommand = parse_command(tokens, Some(Symbol::Pipe))?;
-                    cmd.pos_args.push(subcommand.into());
-                }
-                
-                break; // natural end of command, no more pipes.
+                break; // Encountered a pipe; command must end here.
             },
             
             None => break, // natural end of command, due to EOS.
             
             // Attempt parsing arguments...
-            Some(t) => {
+            Some(token) => {
                 // ...starting with what may just be a expression...
                 let expr = parse_expression(tokens, false)?;
                 
@@ -166,7 +136,7 @@ pub fn parse_command_body(
                     no_more_pos_args = true;
                 } else {
                     if no_more_pos_args {
-                        return Err(ParseError::PosArgAfterNomArg(t.start))
+                        return Err(ParseError::PosArgAfterNomArg(token.start))
                     }
                     
                     // Don't care, push arg, go to next iter.

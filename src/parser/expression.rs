@@ -17,9 +17,8 @@ pub enum Expression {
     /// A command.
     Invoke(Box<Invoke>),
     
-    // TODO: Make pipes a language structure!
-    // /// A pipe.
-    // Pipe(Box<Invoke>),
+    /// A pipe.
+    Pipe(Box<Pipe>),
 }
 
 /// A (data-)structure node of an abstract syntax tree.
@@ -34,14 +33,34 @@ pub enum Structure {
 /// A reference(/variable) node of an abstract syntax tree.
 #[derive(Clone, PartialEq)]
 pub enum ReferenceRoot {
-    /// Context Reference (`$`)
+    /// Context Reference (`$$`)
     Ctx,
-    /// Result Reference (`$$`)
+    /// Result Reference (`$`)
     Res,
     /// Local Reference (`$NAME`)
     Local(CompactString),
     /// Global Reference (`@NAME`)
     Global(CompactString),
+}
+
+/// A pipe.
+#[derive(Clone, PartialEq)]
+pub struct Pipe {
+    /// The expression yielding pipe items.
+    pub source: Expression,
+    
+    /// The segments of the pipe.
+    pub stages: Vec<PipeSeg>,
+}
+
+/// A segment of a pipe.
+#[derive(Clone, PartialEq)]
+pub struct PipeSeg {
+    /// If true, the invoke result is used as filter.
+    pub filter: bool,
+    
+    /// This segments invoke.
+    pub invoke: Invoke,
 }
 
 impl From<Invoke> for Expression {
@@ -60,6 +79,15 @@ impl std::fmt::Debug for Expression {
             Expression::Reference(ReferenceRoot::Local(l)) => write!(f, "${}", l),
             Expression::Reference(ReferenceRoot::Global(g)) => write!(f, "@{}", g),
             Expression::Invoke(c) => write!(f, "({:?})", c),
+            Expression::Pipe(p) => {
+                write!(f, "{:?}", p.source)?;
+                for seg in &p.stages {
+                    write!(f, "|")?;
+                    if seg.filter {write!(f, "?")?}
+                    write!(f, "{:?}", seg.invoke)?;
+                }
+                Ok(())
+            },
         }
     }
 }
@@ -162,6 +190,35 @@ pub fn parse_expression(
                 }.into());
             },
             
+            // Pipe? Pipe!
+            Token {
+                content: TokenContent::Symbol(Symbol::Pipe), ..
+            }  if first => {
+                let mut pipe = Pipe {
+                    source: expr,
+                    stages: vec![],
+                };
+                
+                while let Some(Token {
+                    content: TokenContent::Symbol(Symbol::Pipe), ..
+                }) = tokens.peek() {
+                    drop(tokens.next());
+                    
+                    let filter = matches!(tokens.peek(), Some(Token {content: TokenContent::Symbol(Symbol::QuestionMark),..}));
+                    if filter {drop(tokens.next())}
+                    
+                    let invoke = parse_command(tokens, None)?;
+                    
+                    let seg = PipeSeg {
+                        filter,
+                        invoke,
+                    };
+                    pipe.stages.push(seg);
+                }
+                
+                expr = Expression::Pipe(pipe.into());
+            },
+            
             // Ignore everything else...
             _ => ()
         }
@@ -256,7 +313,7 @@ pub fn parse_item(
     
     // A context variable?
     if let TokenContent::Symbol(Symbol::DoubleDollar) = token.content {
-        return Ok(Expression::Reference(ReferenceRoot::Res))
+        return Ok(Expression::Reference(ReferenceRoot::Ctx))
     }
     
     /*
