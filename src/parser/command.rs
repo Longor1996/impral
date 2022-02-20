@@ -111,6 +111,37 @@ pub fn parse_command_body(
             
             // Attempt parsing arguments...
             Some(token) => {
+                // BAREWORD=
+                // -BAREWORD
+                // +BAREWORD
+                // EXPRESSION
+                
+                if token == Symbol::Dash {
+                    drop(tokens.next());
+                    if let Some(Token {
+                        content: TokenContent::Literal(Literal::Str(s)), ..
+                    }) = tokens.next() {
+                        cmd.nom_args.insert(s, Expression::Value(Literal::Bool(false)));
+                        no_more_pos_args = true;
+                        continue;
+                    } else {
+                        return Err(ParseError::ExpectButGot("a parameter name".into(), "something else".into()))
+                    }
+                }
+                
+                if token == Symbol::Plus {
+                    drop(tokens.next());
+                    if let Some(Token {
+                        content: TokenContent::Literal(Literal::Str(s)), ..
+                    }) = tokens.next() {
+                        cmd.nom_args.insert(s, Expression::Value(Literal::Bool(true)));
+                        no_more_pos_args = true;
+                        continue;
+                    } else {
+                        return Err(ParseError::ExpectButGot("a parameter name".into(), "something else".into()))
+                    }
+                }
+                
                 // ...starting with what may just be a expression...
                 let expr = parse_expression(tokens, false)?;
                 

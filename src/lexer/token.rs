@@ -51,6 +51,14 @@ impl From<(usize, usize, TokenContent)> for Token {
     }
 }
 
+impl PartialEq<Symbol> for Token {
+    fn eq(&self, other: &Symbol) -> bool {
+        if let TokenContent::Symbol(symbol) = &self.content {
+            symbol == other
+        } else { false }
+    }
+}
+
 /// The content of a token.
 #[derive(Debug, Clone)]
 pub enum TokenContent {

@@ -103,6 +103,8 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("move forward for=1")?;
     chk("set $$.motion: * 0.5 $")?;
     
+    chk("gamerules +foo -bar")?;
+    
     Ok(())
 }
 
