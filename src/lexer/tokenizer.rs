@@ -1,10 +1,11 @@
 //! The tokenizer.
 
 use super::*;
+use peekmore::PeekMoreIterator;
 
 /// A peekable stream of tokens.
 #[allow(type_alias_bounds)]
-pub type PeekableTokenStream<TS: TokenStream> = Peekable<TS>;
+pub type PeekableTokenStream<TS: TokenStream> = PeekMoreIterator<TS>;
 
 /// A stream of tokens.
 pub trait TokenStream: Iterator<Item = Token> {}
@@ -251,7 +252,7 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         let remainder: String = input.clone().map(|(_, c)| c).collect();
         Some((index, index+remainder.len(), TokenContent::Remainder(remainder)).into())
         //panic!("Unable to parse token starting with '{}' at position {}", current, index)
-    }).peekable()
+    }).peekmore()
 }
 
 /// Find and stack groups from the given stream of tokens.
@@ -292,5 +293,5 @@ pub fn groupenize(tokens: &mut PeekableTokenStream<impl TokenStream>, delimiter:
             // TODO: Check for unmatched delimiters by `if let None = delimiter`
             None => None, // natural end
         }
-    }).peekable()
+    }).peekmore()
 }

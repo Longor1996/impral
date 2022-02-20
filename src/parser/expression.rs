@@ -1,5 +1,7 @@
 //! Parsing of tokens into Expressions and Structures.
 
+use peekmore::PeekMore;
+
 use super::*;
 
 /// A expression node of an abstract syntax tree.
@@ -263,16 +265,16 @@ pub fn parse_item(
     if let TokenContent::Group(kind, subtokens) = token.content {
         return Ok(match kind {
             Symbol::ParenLeft => parse_command(
-                &mut subtokens.into_iter().peekable(),
+                &mut subtokens.into_iter().peekmore(),
                 Some(Symbol::ParenRight)
             ).map(|i| i.into())?,
             
             Symbol::BraketLeft => parse_list(
-                &mut subtokens.into_iter().peekable()
+                &mut subtokens.into_iter().peekmore()
             ).map(|l| Expression::Structure(Structure::List(l)))?,
             
             Symbol::CurlyLeft => parse_map(
-                &mut subtokens.into_iter().peekable()
+                &mut subtokens.into_iter().peekmore()
             ).map(|d| Expression::Structure(Structure::Dict(d)))?,
             _ => unreachable!()
         })
