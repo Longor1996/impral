@@ -64,6 +64,11 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("\"Oooops...")?;
     chk("0x[FF 01 02 03 04]")?;
     chk("0d[-1 +1 -1 +1 -1]")?;
+    chk("[1, 2, 3, 4, 5,]")?;
+    chk("[1 2 3 4 5]")?;
+    chk("[foo bar baz]")?;
+    chk("{a=1, b=2, c=-3,}")?;
+    chk("{a=1 b=2 c=-3}")?;
     chk("= 1 2 3")?;
     chk("+ 1 2 3")?;
     chk("- 1 2 3")?;
