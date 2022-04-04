@@ -83,7 +83,8 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("test {a = 1, b=2, c=-3}")?;
     chk("testA 1 2 3 | testB 4 5 6 | testC 7 8 9")?;
     chk("maybe-null |? accepts-null")?;
-    chk("conditional & execution")?;
+    chk("conditional && execution")?;
+    chk("alternative || execution")?;
     chk("echo \"Hello, World!\" @s.chat ")?;
     chk("tp @a 0 0 0")?;
     chk("tp @a @world.spawn")?;

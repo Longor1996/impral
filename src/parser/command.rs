@@ -75,12 +75,30 @@ pub fn parse_command_body(
             },
             
             Some(Token {
-                content: TokenContent::Symbol(Symbol::Ampersand), ..
+                content: TokenContent::Symbol(Symbol::DoubleAmpersand), ..
             }) => {
                 drop(tokens.next());
                 
                 let previous = std::mem::replace(&mut cmd, Invoke {
                     name: "if-then".into(),
+                    pos_args: Default::default(),
+                    nom_args: Default::default(),
+                });
+                
+                cmd.pos_args.push(previous.into());
+                
+                let subcommand = parse_command(tokens, None)?;
+                cmd.pos_args.push(subcommand.into());
+                break; // natural end of command, due to subcommand
+            },
+            
+            Some(Token {
+                content: TokenContent::Symbol(Symbol::DoublePipe), ..
+            }) => {
+                drop(tokens.next());
+                
+                let previous = std::mem::replace(&mut cmd, Invoke {
+                    name: "if-else".into(),
                     pos_args: Default::default(),
                     nom_args: Default::default(),
                 });

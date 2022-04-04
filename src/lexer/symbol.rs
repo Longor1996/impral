@@ -146,6 +146,18 @@ pub enum Symbol {
     /// `$$`
     #[strum(to_string="$$")]
     DoubleDollar,
+    
+    /// `&&`
+    #[strum(to_string="&&")]
+    DoubleAmpersand,
+    
+    /// `||`
+    #[strum(to_string="||")]
+    DoublePipe,
+    
+    /// `**`
+    #[strum(to_string="**")]
+    DoubleStar,
 }
 
 impl Symbol {
