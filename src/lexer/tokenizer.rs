@@ -79,18 +79,8 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             }
             
             // Check for literals...
-            match buffer.as_str() {
-                "null" => return Some((index, last_idx, Literal::Nil).into()),
-                "true" => return Some((index, last_idx, Literal::Bool(true)).into()),
-                "false" => return Some((index, last_idx, Literal::Bool(false)).into()),
-                "NaN" => return Some((index, last_idx, Literal::Dec(f64::NAN)).into()),
-                "inf" => return Some((index, last_idx, Literal::Dec(f64::INFINITY)).into()),
-                "infinity" => return Some((index, last_idx, Literal::Dec(f64::INFINITY)).into()),
-                "PI" => return Some((index, last_idx, Literal::Dec(std::f64::consts::PI)).into()),
-                "TAU" => return Some((index, last_idx, Literal::Dec(std::f64::consts::TAU)).into()),
-                "EULER" => return Some((index, last_idx, Literal::Dec(std::f64::consts::E)).into()),
-                "SQRT2" => return Some((index, last_idx, Literal::Dec(std::f64::consts::SQRT_2)).into()),
-                _ => ()
+            if let Some(literal) = try_into_literal(buffer.as_str()) {
+                return Some((index, last_idx, literal).into())
             }
             
             return Some((index, last_idx, Literal::Str(buffer)).into());
@@ -260,6 +250,22 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
     }).peekmore()
 }
 
+/// Attempts to convert a bareword into a constant literal.
+fn try_into_literal(str: &str) -> Option<Literal> {
+    Some(match str {
+        "null" => Literal::Nil,
+        "true" => Literal::Bool(true),
+        "false" => Literal::Bool(false),
+        "NaN" => Literal::Dec(f64::NAN),
+        "inf" => Literal::Dec(f64::INFINITY),
+        "infinity" => Literal::Dec(f64::INFINITY),
+        "PI" => Literal::Dec(std::f64::consts::PI),
+        "TAU" => Literal::Dec(std::f64::consts::TAU),
+        "EULER" => Literal::Dec(std::f64::consts::E),
+        "SQRT2" => Literal::Dec(std::f64::consts::SQRT_2),
+        _ => return None
+    })
+}
 /// Find and stack groups from the given stream of tokens.
 pub fn groupenize(tokens: &mut PeekableTokenStream<impl TokenStream>, delimiter: Option<Symbol>) -> PeekableTokenStream<impl TokenStream + '_> {
     std::iter::from_fn(move || {
