@@ -122,7 +122,7 @@ pub fn parse_expression(
     // Try to parse an expression item...
     let mut expr = parse_item(tokens, first)?;
     
-    if let Some(token) = tokens.peek() {
+    while let Some(token) = tokens.peek() {
         match token {
             // Dot? Subset access!
             Token {
@@ -222,7 +222,7 @@ pub fn parse_expression(
             },
             
             // Ignore everything else...
-            _ => ()
+            _ => break
         }
     }
     
