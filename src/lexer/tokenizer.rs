@@ -244,6 +244,9 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             let decimal = if radix == 10
                 && '.' == input.peek_nth(0).copied().map(|c|c.1).unwrap_or(' ')
                 
+                // This is here so to allow member-access on numbers.
+                && input.peek_nth(1).copied().map(|c|c.1).unwrap_or(' ').is_ascii_digit()
+                
                 // This is here so that two dot's in a row, a range, are not eaten.
                 && '.' != input.peek_nth(1).copied().map(|c|c.1).unwrap_or(' ')
             {
