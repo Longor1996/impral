@@ -15,7 +15,7 @@ repository = "https://github.com/Longor1996/impral"
 [dependencies]
 peekmore = "1.0.0"
 smallvec = "1.6.1"
-smartstring = "0.2.9"
+smartstring = "1.0.1"
 rustc-hash = "1.1.0"
 thiserror = "1.0.26"
 strum = "0.24.0"
