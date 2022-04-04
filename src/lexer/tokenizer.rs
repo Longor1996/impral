@@ -17,7 +17,7 @@ impl<T> TokenStream for T where T: Iterator<Item = Token> {}
 pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
     
     let mut input = input.char_indices().peekmore();
-    let mut encode = [0; 4*2];
+    let mut encode = [0; std::mem::size_of::<char>() * 2];
     
     std::iter::from_fn(move || {
         // Skip any and all whitespace...
@@ -90,6 +90,7 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         if current == '"' {
             let mut buffer = CompactString::new();
             let mut last = current;
+            
             while let Some((_index, peeked)) = input.peek().copied() {
                 last_idx = index;
                 if peeked == '"' && last != '\\' {
@@ -109,6 +110,7 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         if current == '\'' {
             let mut buffer = CompactString::new();
             let mut last = current;
+            
             while let Some((index, peeked)) = input.peek().copied() {
                 last_idx = index;
                 if peeked == '\'' && last != '\\' {
@@ -124,26 +126,27 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             return Some((index, last_idx, Literal::Str(buffer)).into());
         }
         
+        // NOTE: This is the worst code of this lexer!
         // Check for start of number...
         if current.is_ascii_digit() || current == '+' || current == '-' {
             let peeked = input.peek().copied().map(|c|c.1).unwrap_or('0');
             
-            let (current, sign) = match current {
+            let (current, sign, bsign) = match current {
                 '-' => {
                     if !peeked.is_ascii_digit() {
                         return Some((index, index+1, Symbol::Dash).into());
                     }
                     
-                    (input.next().map(|c|c.1).unwrap_or('0'), -1.0f64)
+                    (input.next().map(|c|c.1).unwrap_or('0'), -1.0f64, true)
                 },
                 '+' => {
                     if !peeked.is_ascii_digit() {
                         return Some((index, index+1, Symbol::Plus).into());
                     }
                     
-                    (input.next().map(|c|c.1).unwrap_or('0'), 1.0f64)
+                    (input.next().map(|c|c.1).unwrap_or('0'), 1.0f64, true)
                 },
-                _ => (current, 1.0f64)
+                _ => (current, 1.0f64, false)
             };
             
             let mut buffer = CompactString::new();
@@ -161,6 +164,63 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                     'b' => {input.next(); 2},
                     _ => radix
                 };
+            }
+            
+            if !bsign {
+                if let Some((_, '[')) = input.peek().copied() {
+                    // Array of bytes!
+                    input.next(); // eat [
+                    let mut array: Vec<Token> = vec![];
+                    
+                    loop {
+                        if let Some((index, ']')) = input.peek().copied() {
+                            last_idx = index;
+                            input.next(); // eat ]
+                            break; // end of array
+                        }
+                        
+                        buffer.clear();
+                        
+                        let mut sign = false;
+                        
+                        if let Some((_index, '-')) = input.peek().copied() {
+                            sign = true;
+                            input.next();
+                        } else if let Some((_index, '+')) = input.peek().copied() {
+                            sign = false;
+                            input.next();
+                        }
+                        
+                        // Eat all the INTEGER digits...
+                        while let Some((index, peeked)) = input.peek().copied() {
+                            if peeked == ']' { break }
+                            last_idx = index;
+                            
+                            if ! is_digit_valid(peeked, radix) {
+                                input.next(); // eat unknown
+                                break
+                            }
+                            
+                            buffer.push(peeked);
+                            input.next(); // eat digit
+                        }
+                        
+                        if buffer.is_empty() {
+                            continue;
+                        }
+                        
+                        let integer = match i64::from_str_radix(&buffer, radix) {
+                            Ok(i) => i,
+                            Err(err) => panic!("Failed to parse '{}' with radix {}: {}", buffer, radix, err),
+                        };
+                        
+                        let integer = sign.then(||-integer).unwrap_or(integer);
+                        
+                        array.push((last_idx, last_idx, Literal::Int(integer)).into());
+                    }
+                    
+                    return Some((index, last_idx, TokenContent::Group(Symbol::BraketLeft, array)).into());
+                }
             }
             
             // Eat all the INTEGER digits...

@@ -61,6 +61,8 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("180°")?;
     chk("\"Hello, World!\"")?;
     chk("\"Oooops...")?;
+    chk("0x[FF 01 02 03 04]")?;
+    chk("0d[-1 +1 -1 +1 -1]")?;
     chk("= 1 2 3")?;
     chk("+ 1 2 3")?;
     chk("- 1 2 3")?;
