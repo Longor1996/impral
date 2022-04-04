@@ -52,7 +52,18 @@ impl std::fmt::Debug for Literal {
             Literal::Int(v) => write!(f, "{}i", v),
             Literal::Dec(v) => write!(f, "{}f", v),
             Literal::Str(v) => write!(f, "{}", v),
-            Literal::Byt(_v) => write!(f, "BYTES"),
+            Literal::Byt(v) => {
+                write!(f, "0x[")?;
+                let mut tail = false;
+                for byte in v {
+                    if tail {
+                        write!(f, " ")?;
+                    }
+                    write!(f, "{:02X}", byte)?;
+                    tail = true;
+                }
+                write!(f, "]")
+            },
         }
     }
 }
