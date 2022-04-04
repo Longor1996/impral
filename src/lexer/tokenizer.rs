@@ -84,7 +84,12 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                 "true" => return Some((index, last_idx, Literal::Bool(true)).into()),
                 "false" => return Some((index, last_idx, Literal::Bool(false)).into()),
                 "NaN" => return Some((index, last_idx, Literal::Dec(f64::NAN)).into()),
+                "inf" => return Some((index, last_idx, Literal::Dec(f64::INFINITY)).into()),
                 "infinity" => return Some((index, last_idx, Literal::Dec(f64::INFINITY)).into()),
+                "PI" => return Some((index, last_idx, Literal::Dec(std::f64::consts::PI)).into()),
+                "TAU" => return Some((index, last_idx, Literal::Dec(std::f64::consts::TAU)).into()),
+                "EULER" => return Some((index, last_idx, Literal::Dec(std::f64::consts::E)).into()),
+                "SQRT2" => return Some((index, last_idx, Literal::Dec(std::f64::consts::SQRT_2)).into()),
                 _ => ()
             }
             

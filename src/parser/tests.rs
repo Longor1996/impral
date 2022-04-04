@@ -51,6 +51,13 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("false")?;
     chk("12345")?;
     chk("3.141")?;
+    chk("NaN")?;
+    chk("inf")?;
+    chk("infinity")?;
+    chk("PI")?;
+    chk("TAU")?;
+    chk("EULER")?;
+    chk("SQRT2")?;
     chk("180°")?;
     chk("= 1 2 3")?;
     chk("+ 1 2 3")?;
