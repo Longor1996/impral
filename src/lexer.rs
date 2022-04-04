@@ -1,5 +1,4 @@
 //! Lexer that `tokenize`s a string slice into an iterator of `Token`'s.
-use std::{iter::Peekable};
 use smartstring::alias::CompactString;
 use peekmore::*;
 

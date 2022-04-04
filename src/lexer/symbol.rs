@@ -149,7 +149,7 @@ pub enum Symbol {
 }
 
 impl Symbol {
-    /// Is the symbol a delimiter?
+    /// Is the symbol a operator?
     pub fn is_operator(&self) -> bool {
         matches!(self
             , Self::EqualSign

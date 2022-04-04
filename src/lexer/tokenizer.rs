@@ -211,7 +211,10 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                         
                         let integer = match i64::from_str_radix(&buffer, radix) {
                             Ok(i) => i,
-                            Err(err) => panic!("Failed to parse '{}' with radix {}: {}", buffer, radix, err),
+                            Err(err) => {
+                                panic!("Failed to parse '{}' with radix {}: {}", buffer, radix, err)
+                                //return Some((index, last_idx, TokenContent::Remainder(buffer.into())).into());
+                            },
                         };
                         
                         let integer = sign.then(||-integer).unwrap_or(integer);
@@ -302,7 +305,6 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         
         let remainder: String = input.clone().map(|(_, c)| c).collect();
         Some((index, index+remainder.len(), TokenContent::Remainder(remainder)).into())
-        //panic!("Unable to parse token starting with '{}' at position {}", current, index)
     }).peekmore()
 }
 
