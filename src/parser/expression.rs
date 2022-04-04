@@ -128,50 +128,50 @@ pub fn parse_expression(
             Token {
                 content: TokenContent::Symbol(Symbol::Dot), ..
             } => {
-                drop(tokens.next()); // drop the dot
+                drop(tokens.next()); // drop the first dot
+                
+                let mut get = Invoke {
+                    name: "get".into(),
+                    pos_args: smallvec![expr],
+                    nom_args: Default::default(),
+                };
                 
                 if let Some(Token {
-                    content: TokenContent::Symbol(Symbol::Dot), ..
+                    content: TokenContent::Symbol(Symbol::QuestionMark), ..
                 }) = tokens.peek() {
-                    drop(tokens.next()); // drop the second dot
-                    
-                    let mut range = Invoke {
-                        name: "range".into(),
-                        pos_args: smallvec![expr],
-                        nom_args: Default::default(),
-                    };
-                    
-                    let inner = parse_expression(tokens, false)?;
-                    range.pos_args.push(inner);
-                    
-                    expr = Expression::Invoke(range.into());
+                    get.name = "get-unwrap".into();
+                    drop(tokens.next()); // drop the question-mark
                 }
-                else {
-                    let mut get = Invoke {
-                        name: "idx".into(),
-                        pos_args: smallvec![expr],
-                        nom_args: Default::default(),
-                    };
-                    
-                    if let Some(Token {
-                        content: TokenContent::Symbol(Symbol::QuestionMark), ..
-                    }) = tokens.peek() {
-                        get.name = "idxn".into();
-                        drop(tokens.next()); // drop the question-mark
-                    }
-                    
-                    let inner = parse_expression(tokens, false)?;
-                    get.pos_args.push(inner);
-                    
-                    expr = Expression::Invoke(get.into());
-                }
+                
+                let inner = parse_expression(tokens, false)?;
+                get.pos_args.push(inner);
+                
+                expr = Expression::Invoke(get.into());
+            },
+            
+            // Range? Parse Range!
+            Token {
+                content: TokenContent::Symbol(Symbol::Range), ..
+            } => {
+                drop(tokens.next()); // drop the range
+                
+                let mut range = Invoke {
+                    name: "range".into(),
+                    pos_args: smallvec![expr],
+                    nom_args: Default::default(),
+                };
+                
+                let inner = parse_expression(tokens, false)?;
+                range.pos_args.push(inner);
+                
+                expr = Expression::Invoke(range.into());
             },
             
             // QuestionMark? Existence check!
             Token {
                 content: TokenContent::Symbol(Symbol::QuestionMark), ..
             } => {
-                drop(tokens.next()); // drop the dot
+                drop(tokens.next()); // drop the questionmark
                 expr = Expression::Invoke(Invoke {
                     name: "exists".into(),
                     pos_args: smallvec![expr],
@@ -183,11 +183,23 @@ pub fn parse_expression(
             Token {
                 content: TokenContent::Symbol(Symbol::Tilde), ..
             } => {
-                drop(tokens.next()); // drop the dot
+                drop(tokens.next()); // drop the tilde
                 let to = parse_expression(tokens, false)?;
                 expr = Expression::Invoke(Invoke {
-                    name: "rel".into(),
+                    name: "relative".into(),
                     pos_args: smallvec![expr, to],
+                    nom_args: Default::default(),
+                }.into());
+            },
+            
+            // Circle? deg2rad!
+            Token {
+                content: TokenContent::Symbol(Symbol::Circle), ..
+            } => {
+                drop(tokens.next()); // drop the circle
+                expr = Expression::Invoke(Invoke {
+                    name: "deg2rad".into(),
+                    pos_args: smallvec![expr],
                     nom_args: Default::default(),
                 }.into());
             },

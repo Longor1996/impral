@@ -50,6 +50,8 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("true")?;
     chk("false")?;
     chk("12345")?;
+    chk("3.141")?;
+    chk("180°")?;
     chk("= 1 2 3")?;
     chk("+ 1 2 3")?;
     chk("- 1 2 3")?;
@@ -76,8 +78,8 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("tp @a @world.spawn")?;
     chk("tp @a 0 100 0 rel=@self")?;
     chk("for @a: tp [0 100 0]~$$")?;
-    //chk("test 0..10")?;
-    //chk("test (get1)..(get2 $$)")?;
+    chk("test 0..10")?;
+    chk("test (get1)..(get2 $$)")?;
     
     chk("alias FOO (BAR ARG)")?;
     chk("alias FOO: BAR ARG")?;

@@ -107,6 +107,10 @@ pub enum Symbol {
     #[strum(to_string="&")]
     Ampersand,
     
+    /// `°`
+    #[strum(to_string="°")]
+    Circle,
+    
     /// `|`
     #[strum(to_string="|")]
     Pipe,
