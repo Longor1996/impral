@@ -165,12 +165,8 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             
             // Eat all the INTEGER digits...
             while let Some((_index, peeked)) = input.peek().copied() {
-                match radix {
-                    2 if peeked == '0' || peeked == '1' => (),
-                    8 if ('0'..='7').contains(&peeked) => (),
-                    10 if peeked.is_ascii_digit() => (),
-                    16 if peeked.is_ascii_hexdigit() => (),
-                    _ => break
+                if ! is_digit_valid(peeked, radix) {
+                    break
                 }
                 
                 buffer.push(peeked);
@@ -266,6 +262,18 @@ fn try_into_literal(str: &str) -> Option<Literal> {
         _ => return None
     })
 }
+
+/// Checks if a given digit is valid under the provided radix.
+fn is_digit_valid(peeked: char, radix: u32) -> bool {
+    match radix {
+        2 if peeked == '0' || peeked == '1' => true,
+        8 if ('0'..='7').contains(&peeked) => true,
+        10 if peeked.is_ascii_digit() => true,
+        16 if peeked.is_ascii_hexdigit() => true,
+        _ => false
+    }
+}
+
 /// Find and stack groups from the given stream of tokens.
 pub fn groupenize(tokens: &mut PeekableTokenStream<impl TokenStream>, delimiter: Option<Symbol>) -> PeekableTokenStream<impl TokenStream + '_> {
     std::iter::from_fn(move || {
