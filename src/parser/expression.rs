@@ -273,10 +273,10 @@ pub fn parse_item(
     // A group? Parse a subset!
     if let TokenContent::Group(kind, subtokens) = token.content {
         return Ok(match kind {
-            Symbol::ParenLeft => parse_command(
+            Symbol::ParenLeft => parse_expression(
                 &mut subtokens.into_iter().peekmore(),
-                Some(Symbol::ParenRight)
-            ).map(|i| i.into())?,
+                true
+            )?,
             
             Symbol::BraketLeft => parse_list(
                 &mut subtokens.into_iter().peekmore()
@@ -285,7 +285,8 @@ pub fn parse_item(
             Symbol::CurlyLeft => parse_map(
                 &mut subtokens.into_iter().peekmore()
             ).map(|d| Expression::Structure(Structure::Dict(d)))?,
-            _ => unreachable!()
+            
+            _ => unreachable!("encountered a token-group of unknown kind")
         })
     }
     
