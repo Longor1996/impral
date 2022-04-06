@@ -2,7 +2,6 @@
 
 use super::*;
 
-
 /// Try to convert the given TokenContent into a command-name...
 pub fn try_into_command_name(token: &Token) -> Result<smartstring::alias::CompactString, ParseError> {
     match token.content.clone() {
@@ -196,32 +195,4 @@ pub fn parse_command_body(
     }
     
     Ok(cmd)
-}
-
-/// A command to be evaluated.
-#[derive(Clone, Default, PartialEq)]
-pub struct Invoke {
-    /// The name of the command.
-    pub name: CompactString,
-    
-    /// The positional arguments.
-    ///
-    /// As long as there is only one positional argument, there will be no direct heap allocation.
-    pub pos_args: SmallVec<[Expression; 1]>,
-    
-    /// The nominal/named arguments.
-    pub nom_args: FxHashMap<CompactString, Expression>,
-}
-
-impl std::fmt::Debug for Invoke {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", &self.name)?;
-        for arg in &self.pos_args {
-            write!(f, " {:?}", arg)?;
-        }
-        for (key, arg) in &self.nom_args {
-            write!(f, " {}={:?}", key, arg)?;
-        }
-        write!(f, "")
-    }
 }

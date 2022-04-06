@@ -4,113 +4,6 @@ use peekmore::PeekMore;
 
 use super::*;
 
-/// A expression node of an abstract syntax tree.
-#[derive(Clone, PartialEq)]
-pub enum Expression {
-    /// A literal.
-    Value(Literal),
-    
-    /// A structure (*not* a command!).
-    Structure(Structure),
-    
-    /// A reference.
-    Reference(ReferenceRoot),
-    
-    /// A command.
-    Invoke(Box<Invoke>),
-    
-    /// A pipe.
-    Pipe(Box<Pipe>),
-}
-
-/// A (data-)structure node of an abstract syntax tree.
-#[derive(Clone, PartialEq)]
-pub enum Structure {
-    /// A list.
-    List(Vec<Expression>),
-    /// A dict.
-    Dict(FxHashMap<CompactString, Expression>),
-}
-
-/// A reference(/variable) node of an abstract syntax tree.
-#[derive(Clone, PartialEq)]
-pub enum ReferenceRoot {
-    /// Context Reference (`$$`)
-    Ctx,
-    /// Result Reference (`$`)
-    Res,
-    /// Local Reference (`$NAME`)
-    Local(CompactString),
-    /// Global Reference (`@NAME`)
-    Global(CompactString),
-}
-
-/// A pipe.
-#[derive(Clone, PartialEq)]
-pub struct Pipe {
-    /// The expression yielding pipe items.
-    pub source: Expression,
-    
-    /// The segments of the pipe.
-    pub stages: Vec<PipeSeg>,
-}
-
-/// A segment of a pipe.
-#[derive(Clone, PartialEq)]
-pub struct PipeSeg {
-    /// If true, the invoke result is used as filter.
-    pub filter: bool,
-    
-    /// This segments invoke.
-    pub invoke: Invoke,
-}
-
-impl From<Invoke> for Expression {
-    fn from(i: Invoke) -> Self {
-        Self::Invoke(i.into())
-    }
-}
-
-impl std::fmt::Debug for Expression {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Expression::Value(l) => std::fmt::Debug::fmt(l, f),
-            Expression::Structure(s) => std::fmt::Debug::fmt(s, f),
-            Expression::Reference(r) => std::fmt::Debug::fmt(r, f),
-            Expression::Invoke(c) => write!(f, "({:?})", c),
-            Expression::Pipe(p) => {
-                write!(f, "({:?}", p.source)?;
-                for seg in &p.stages {
-                    write!(f, "|")?;
-                    if seg.filter {write!(f, "?")?}
-                    write!(f, "{:?}", seg.invoke)?;
-                }
-                write!(f, ")")
-            },
-        }
-    }
-}
-
-impl std::fmt::Debug for Structure {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::List(l) => std::fmt::Debug::fmt(l, f),
-            Self::Dict(s) => std::fmt::Debug::fmt(s, f),
-        }
-    }
-}
-
-impl std::fmt::Debug for ReferenceRoot {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Ctx => write!(f, "$$"),
-            Self::Res => write!(f, "$"),
-            Self::Local(l) => write!(f, "${}", l),
-            Self::Global(g) => write!(f, "@{}", g),
-        }
-    }
-}
-
 /// Parses a `TokenStream` into an AST.
 pub fn parse_expression(
     tokens: &mut PeekableTokenStream<impl TokenStream>,
@@ -327,25 +220,6 @@ pub fn parse_item(
     if let TokenContent::Symbol(Symbol::DoubleDollar) = token.content {
         return Ok(Expression::Reference(ReferenceRoot::Ctx))
     }
-    
-    /*
-    Ok(match token {
-        // Doubledot? Invalid!
-        Token {
-            content: TokenContent::Symbol(Symbol::DoubleDot), ..
-        } => return Err(ParseError::Unexpected("double-dot in expression".into())),
-        
-        // Symbols means more complex parsing...
-        Token {
-            content: TokenContent::Symbol(s), ..
-        } => {
-            return Err(ParseError::Unexpected(format!("symbol in expression: {}", s).into()))
-        },
-        
-        Token {content, ..}
-        => return Err(ParseError::Unexpected(format!("token content: {:?}", content).into()))
-    })
-    */
     
     return Err(ParseError::Unexpected(format!("token content: {:?}", token.content).into()))
 }

@@ -6,7 +6,7 @@ use smallvec::{SmallVec, smallvec};
 use rustc_hash::FxHashMap;
 use smartstring::alias::CompactString;
 
-use crate::{lexer::*};
+use crate::lexer::*;
 
 pub mod expression;
 pub use expression::*;
@@ -16,6 +16,9 @@ pub use command::*;
 
 pub mod error;
 pub use error::*;
+
+pub mod ast;
+pub use ast::*;
 
 #[cfg(test)]
 mod tests;
