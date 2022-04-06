@@ -76,19 +76,16 @@ impl std::fmt::Debug for Expression {
         match self {
             Expression::Value(l) => std::fmt::Debug::fmt(l, f),
             Expression::Structure(s) => std::fmt::Debug::fmt(s, f),
-            Expression::Reference(ReferenceRoot::Ctx) => write!(f, "$"),
-            Expression::Reference(ReferenceRoot::Res) => write!(f, "$$"),
-            Expression::Reference(ReferenceRoot::Local(l)) => write!(f, "${}", l),
-            Expression::Reference(ReferenceRoot::Global(g)) => write!(f, "@{}", g),
+            Expression::Reference(r) => std::fmt::Debug::fmt(r, f),
             Expression::Invoke(c) => write!(f, "({:?})", c),
             Expression::Pipe(p) => {
-                write!(f, "{:?}", p.source)?;
+                write!(f, "({:?}", p.source)?;
                 for seg in &p.stages {
                     write!(f, "|")?;
                     if seg.filter {write!(f, "?")?}
                     write!(f, "{:?}", seg.invoke)?;
                 }
-                Ok(())
+                write!(f, ")")
             },
         }
     }
