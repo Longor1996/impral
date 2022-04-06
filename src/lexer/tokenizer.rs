@@ -64,26 +64,16 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         
         // Check for start of bareword...
         if current.is_alphabetic() || current == '_' {
-            let mut buffer = CompactString::new();
-            buffer.push(current);
             
-            while let Some((index, peeked)) = input.peek().copied() {
-                last_idx = index;
-                if peeked.is_alphanumeric() || peeked == '_' || peeked == '-' {
-                    buffer.push(peeked);
-                    input.next(); // eat char
-                    // NOTE: This could be implemented using `input.next_if`.
-                } else {
-                    break;
-                }
+            if current == 'U' {
+                // TODO: Check and parse UUID
             }
             
-            // Check for literals...
-            if let Some(literal) = try_into_literal(buffer.as_str()) {
-                return Some((index, last_idx, literal).into())
-            }
+            let (start, end, bareword) = try_lex_bareword(&mut input, index, current);
             
-            return Some((index, last_idx, Literal::Str(buffer)).into());
+            return Some((start, end,
+                try_into_constant(bareword.as_str()).unwrap_or(Literal::Str(bareword))
+            ).into());
         }
         
         // Check for start of string...
@@ -311,8 +301,26 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
     }).peekmore()
 }
 
+fn try_lex_bareword(input: &mut PeekMoreIterator<std::str::CharIndices>, start: usize, current: char) -> (usize, usize, CompactString) {
+    let mut end = start;
+    let mut buffer = CompactString::new();
+    buffer.push(current);
+    
+    while let Some((index, peeked)) = input.peek().copied() {
+        end = index;
+        if peeked.is_alphanumeric() || peeked == '_' || peeked == '-' {
+            buffer.push(peeked);
+            input.next(); // eat char
+            // NOTE: This could be implemented using `input.next_if`.
+        } else {
+            break;
+        }
+    }
+    
+    (start, end, buffer)
+}
 /// Attempts to convert a bareword into a constant literal.
-fn try_into_literal(str: &str) -> Option<Literal> {
+fn try_into_constant(str: &str) -> Option<Literal> {
     Some(match str {
         "null" => Literal::Nil,
         "true" => Literal::Bool(true),
