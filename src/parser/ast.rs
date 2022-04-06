@@ -75,7 +75,7 @@ pub struct PipeSeg {
     pub filter: bool,
     
     /// This segments invoke.
-    pub invoke: Invoke,
+    pub invoke: Expression,
 }
 
 
@@ -94,9 +94,9 @@ impl std::fmt::Debug for Expression {
             Expression::Pipe(p) => {
                 write!(f, "({:?}", p.source)?;
                 for seg in &p.stages {
-                    write!(f, "|")?;
+                    write!(f, " |")?;
                     if seg.filter {write!(f, "?")?}
-                    write!(f, "{:?}", seg.invoke)?;
+                    write!(f, " {:?}", seg.invoke)?;
                 }
                 write!(f, ")")
             },

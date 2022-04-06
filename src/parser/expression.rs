@@ -98,29 +98,7 @@ pub fn parse_expression(
             Token {
                 content: TokenContent::Symbol(Symbol::Pipe), ..
             }  if first => {
-                let mut pipe = Pipe {
-                    source: expr,
-                    stages: vec![],
-                };
-                
-                while let Some(Token {
-                    content: TokenContent::Symbol(Symbol::Pipe), ..
-                }) = tokens.peek() {
-                    drop(tokens.next());
-                    
-                    let filter = matches!(tokens.peek(), Some(Token {content: TokenContent::Symbol(Symbol::QuestionMark),..}));
-                    if filter {drop(tokens.next())}
-                    
-                    let invoke = parse_command(tokens, None)?;
-                    
-                    let seg = PipeSeg {
-                        filter,
-                        invoke,
-                    };
-                    pipe.stages.push(seg);
-                }
-                
-                expr = Expression::Pipe(pipe.into());
+                expr = Expression::Pipe(parse_pipe(tokens, expr)?.into());
             },
             
             // Ignore everything else...
@@ -129,6 +107,36 @@ pub fn parse_expression(
     }
     
     Ok(expr)
+}
+
+/// Parses a `TokenStream` into an item (piece of an expression).
+pub fn parse_pipe(
+    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    source: Expression
+) -> Result<Pipe, ParseError> {
+    let mut pipe = Pipe {
+        source,
+        stages: vec![],
+    };
+    
+    while let Some(Token {
+        content: TokenContent::Symbol(Symbol::Pipe), ..
+    }) = tokens.peek() {
+        drop(tokens.next());
+        
+        let filter = matches!(tokens.peek(), Some(Token {content: TokenContent::Symbol(Symbol::QuestionMark),..}));
+        if filter {drop(tokens.next())}
+        
+        let invoke = parse_expression(tokens, true)?;
+        
+        let seg = PipeSeg {
+            filter,
+            invoke,
+        };
+        pipe.stages.push(seg);
+    }
+    
+    Ok(pipe)
 }
 
 /// Parses a `TokenStream` into an item (piece of an expression).
