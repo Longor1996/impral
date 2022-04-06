@@ -11,6 +11,9 @@ use crate::lexer::*;
 pub mod expression;
 pub use expression::*;
 
+pub mod structure;
+pub use structure::*;
+
 pub mod command;
 pub use command::*;
 
