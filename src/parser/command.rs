@@ -65,6 +65,14 @@ pub fn parse_command_body(
             },
             
             Some(Token {
+                content: TokenContent::Symbol(Symbol::Semicolon), ..
+            }) => {
+                // We do NOT drop the semicolon!
+                //drop(tokens.next());
+                break; // natural end of command, due to semicolon
+            },
+            
+            Some(Token {
                 content: TokenContent::Symbol(Symbol::DoubleDot), ..
             }) => {
                 drop(tokens.next());

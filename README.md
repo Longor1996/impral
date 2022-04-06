@@ -99,6 +99,9 @@ So, a command consists of three (and a half) parts:
 4. **Continuation command.** (*optional*)  
 	Another command that is an extra positional parameter in the last position, written after a `:`.
 
+5. **Command Delimiter.** (*optional*)  
+	If the parser encounters a `;`, it will stop parsing, regardless of what comes after the semicolon.
+
 To sum this up:
 
 - Basic command syntax: `symbol arg1 arg2 … argN`

@@ -85,6 +85,7 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("test 1 2 3 a=4")?;
     chk("mul 2 (+ 1 2 3)")?;
     chk("test foo: bar baz")?;
+    chk("test foo; bar baz")?;
     chk("test [1 2 3 4 5]")?;
     chk("test {a = 1, b=2, c=-3}")?;
     chk("testA 1 2 3 | testB 4 5 6 | testC 7 8 9")?;
