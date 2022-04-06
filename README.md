@@ -1,6 +1,6 @@
 # IMPRAL
 
-IMPRAL is a command parsing and evaluation library for a LISP dialect, intended for reasonably ergonomic and specialized commandline input.
+IMPRAL is a command parsing and evaluation library for a LISP dialect, intended for reasonably ergonomic and specialized commandline input within larger applications and frameworks.
 
 **DISCLAIMER:** Currently incomplete/still in development. *Do not use.*
 
@@ -85,7 +85,7 @@ So, a command consists of three (and a half) parts:
 
 1. **The symbol identifying the command.**  
 	A unique bareword or any of the built-in operators.
-	Neither positional nor named arguments must come before the command identifier.
+	Neither positional nor named arguments may be placed before the command identifier.
 
 2. **The positional arguments.**  
 	A whitespace separated list of values.
@@ -94,6 +94,7 @@ So, a command consists of three (and a half) parts:
 	A whitespace separated list of `key=value`-pairs; the keys are *always* barewords.  
 	Named arguments are *required* to be written *after* the positional arguments.  
 	The only exception to this are continuation commands in the last position.
+  One may also write flag-arguments, consisting of a `+` or `-` and a bareword as name.
 
 4. **Continuation command.** (*optional*)  
 	Another command that is an extra positional parameter in the last position, written after a `:`.
@@ -101,22 +102,25 @@ So, a command consists of three (and a half) parts:
 To sum this up:
 
 - Basic command syntax: `symbol arg1 arg2 … argN`
-- Named parameters:     `symbol … kvarg1=val kvarg2=val … kvargN=val`
+- Named parameters:     `symbol … kvarg1=val1 kvarg2=val2 … kvargN=valN`
+- Flag parameters:      `symbol … +kvarg -kvarg …`
 - With continuation:    `symbol … …: command`
 
-#### Subcommands
+### Subcommands
 
 Commands can be enclosed in parentheses and be used as arguments for other commands:  `(symbol …)`
 
-#### Logical Operators
+### Logical Operators
 
 By writing two commands separated by `&&`, the latter command will only be executed if the former *succeeds*, with the result being bound to `$`: `foo … && bar $ …`
 
 By separating them with `||` instead, the latter command will only be executed if the former *fails*: `foo … || bar …`
 
-#### Command Pipes
+Both of the logical operators may be chained; evaluation will occur from left to right.
 
-A sequence of commands can be written as a `pipe`, in which every command passes it's result (`$`) to the next command: `players | where $$.health less 50 | heal $`
+### Command Pipes
+
+A sequence of commands can be written as a `pipe`, in which every command passes it's result (`$`) to the next command: `players | where $.health less 50 | heal $`
 
 If a command returns an iterator, the iterator's items will be passed thru the pipe, instead of the iterator itself.
 
