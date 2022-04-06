@@ -117,7 +117,7 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("raytrace $$ 10m elod=hitbox")?;
     chk("raytrace $$ 10m elod=phybox")?;
     
-    chk("e|sphere $ 0.5m|raytrace $$ max|?is marker|del")?;
+    chk("e|sphere $ 0.5m|raytrace $ max|?is marker|del")?;
     
     chk("tp 0 0 0 motion=0")?;
     chk("move forward for=1")?;

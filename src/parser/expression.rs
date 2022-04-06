@@ -103,8 +103,8 @@ impl std::fmt::Debug for Structure {
 impl std::fmt::Debug for ReferenceRoot {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Ctx => write!(f, "$"),
-            Self::Res => write!(f, "$$"),
+            Self::Ctx => write!(f, "$$"),
+            Self::Res => write!(f, "$"),
             Self::Local(l) => write!(f, "${}", l),
             Self::Global(g) => write!(f, "@{}", g),
         }
