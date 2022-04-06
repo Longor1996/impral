@@ -76,44 +76,16 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             ).into());
         }
         
-        // Check for start of string...
+        // Check for start of double-quoted string...
         if current == '"' {
-            let mut buffer = CompactString::new();
-            let mut last = current;
-            
-            while let Some((_index, peeked)) = input.peek().copied() {
-                last_idx = index;
-                if peeked == '"' && last != '\\' {
-                    input.next(); // drop the `"`
-                    break;
-                } else {
-                    buffer.push(peeked);
-                    input.next(); // eat char
-                    last = peeked;
-                }
-            }
-            
-            return Some((index, last_idx, Literal::Str(buffer)).into());
+            let (start, end, string) = try_lex_string(&mut input, index, current, '"');
+            return Some((start, end, Literal::Str(string)).into());
         }
         
-        // Check for start of string...
+        // Check for start of single-quoted string...
         if current == '\'' {
-            let mut buffer = CompactString::new();
-            let mut last = current;
-            
-            while let Some((index, peeked)) = input.peek().copied() {
-                last_idx = index;
-                if peeked == '\'' && last != '\\' {
-                    input.next(); // drop the `"`
-                    break;
-                } else {
-                    buffer.push(peeked);
-                    input.next(); // eat char
-                    last = peeked;
-                }
-            }
-            
-            return Some((index, last_idx, Literal::Str(buffer)).into());
+            let (start, end, string) = try_lex_string(&mut input, index, current, '\'');
+            return Some((start, end, Literal::Str(string)).into());
         }
         
         // NOTE: This is the worst code of this lexer!
@@ -319,6 +291,33 @@ fn try_lex_bareword(input: &mut PeekMoreIterator<std::str::CharIndices>, start: 
     
     (start, end, buffer)
 }
+
+fn try_lex_string(input: &mut PeekMoreIterator<std::str::CharIndices>, start: usize, current: char, delimiter: char) -> (usize, usize, CompactString) {
+    let mut buffer = CompactString::new();
+    let mut last = current;
+    let mut end = start;
+    
+    #[allow(clippy::while_let_loop)]
+    loop {
+        let (index, peeked) = match input.peek().copied() {
+            Some(i) => i,
+            None => break // TODO: Return error?
+        };
+        
+        end = index;
+        if peeked == delimiter && last != '\\' {
+            input.next(); // drop the `"`
+            break;
+        } else {
+            buffer.push(peeked);
+            input.next(); // eat char
+            last = peeked;
+        }
+    }
+    
+    (start, end, buffer)
+}
+
 /// Attempts to convert a bareword into a constant literal.
 fn try_into_constant(str: &str) -> Option<Literal> {
     Some(match str {
