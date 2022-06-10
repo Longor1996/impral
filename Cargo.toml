@@ -1,6 +1,6 @@
 [package]
 name = "impral"
-version = "0.1.4"
+version = "0.1.5"
 license = "MIT OR Apache-2.0"
 authors = ["Longor1996 <lalongok@gmail.com>"]
 edition = "2021"
@@ -20,10 +20,11 @@ rustc-hash = "1.1.0"
 thiserror = "1.0.31"
 strum = "0.24.0"
 strum_macros = "0.24.0"
-nanval = "0.1.1"
-# uuid = "^0.8"
 
-[dependencies.tagged-box]
-version = "0.1.1"
-default-features = false
-features = ["57bits"]
+#nanval = "0.1.1"
+#uuid = "^0.8"
+
+#[dependencies.tagged-box]
+#version = "0.1.1"
+#default-features = false
+#features = ["57bits"]
