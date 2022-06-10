@@ -14,13 +14,14 @@ repository = "https://github.com/Longor1996/impral"
 
 [dependencies]
 peekmore = "1.0.0"
-smallvec = "1.6.1"
+smallvec = "1.8.0"
 smartstring = "1.0.1"
 rustc-hash = "1.1.0"
-thiserror = "1.0.26"
+thiserror = "1.0.31"
 strum = "0.24.0"
 strum_macros = "0.24.0"
 nanval = "0.1.1"
+# uuid = "^0.8"
 
 [dependencies.tagged-box]
 version = "0.1.1"
