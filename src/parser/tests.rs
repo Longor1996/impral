@@ -54,6 +54,8 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("NaN")?;
     chk("inf")?;
     chk("infinity")?;
+    chk("+infinity")?;
+    chk("-infinity")?;
     chk("PI")?;
     chk("TAU")?;
     chk("EULER")?;
