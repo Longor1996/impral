@@ -74,3 +74,16 @@ pub enum TokenContent {
     /// The remainder.
     Remainder(String),
 }
+
+impl TryFrom<&TokenContent> for Symbol {
+    type Error = ();
+
+    fn try_from(value: &TokenContent) -> Result<Self, Self::Error> {
+        match value {
+            TokenContent::Symbol(s) => Ok(*s),
+            TokenContent::Literal(_) => Err(()),
+            TokenContent::Group(_, _) => Err(()),
+            TokenContent::Remainder(_) => Err(()),
+        }
+    }
+}
