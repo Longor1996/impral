@@ -5,13 +5,13 @@ use super::*;
 /// A expression node.
 #[derive(Clone, PartialEq)]
 pub enum Expression {
-    /// A literal.
+    /// A value literal.
     Value(Literal),
     
-    /// A structure (*not* a command!).
+    /// A structure literal.
     Structure(Structure),
     
-    /// A reference.
+    /// A reference literal.
     Reference(ReferenceRoot),
     
     /// A command.

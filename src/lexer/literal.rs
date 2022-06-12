@@ -20,7 +20,7 @@ pub enum Literal {
     /// 64-bit Floating Point Number
     Dec(f64),
     
-    /// String
+    /// String | Bareword
     Str(CompactString),
     
     /// Bytes
