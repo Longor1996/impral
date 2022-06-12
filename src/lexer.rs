@@ -2,6 +2,9 @@
 use smartstring::alias::CompactString;
 use peekmore::*;
 
+pub mod input;
+pub use input::*;
+
 pub mod tokenizer;
 pub use tokenizer::*;
 
