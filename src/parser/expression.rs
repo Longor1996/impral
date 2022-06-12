@@ -181,11 +181,19 @@ pub fn parse_item(
             
             Symbol::BraketLeft => parse_list(
                 &mut subtokens.into_iter().peekmore()
-            ).map(|l| Expression::Structure(Structure::List(l)))?,
+            ).map(|l| Expression::Invoke(Box::new(Invoke {
+                name: "list".into(),
+                pos_args: l,
+                ..Default::default()
+            })))?,
             
             Symbol::CurlyLeft => parse_map(
                 &mut subtokens.into_iter().peekmore()
-            ).map(|d| Expression::Structure(Structure::Dict(d)))?,
+            ).map(|d| Expression::Invoke(Box::new(Invoke {
+                name: "dict".into(),
+                nom_args: d,
+                ..Default::default()
+            })))?,
             
             _ => unreachable!("encountered a token-group of unknown kind")
         })

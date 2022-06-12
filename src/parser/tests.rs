@@ -35,7 +35,6 @@ fn sizes() {
     eprintln!("SizeOf LEX.L = {}", size_of::<Literal>());
     eprintln!("SizeOf LEX.S = {}", size_of::<Symbol>());
     eprintln!("SizeOf AST = {}", size_of::<Expression>());
-    eprintln!("- SizeOf AST.S = {}", size_of::<Structure>());
     eprintln!("- SizeOf AST.I = {}", size_of::<Invoke>());
     eprintln!("- SizeOf AST.P = {}", size_of::<Pipe>());
     eprintln!("SizeOf [AST;1] = {}", size_of::<SmallVec<[Expression;1]>>());

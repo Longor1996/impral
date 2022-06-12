@@ -8,24 +8,11 @@ pub enum Expression {
     /// A value: A lone piece of data.
     Value(Literal),
     
-    // TODO: Convert list & dict structures into invokes and erase this variant.
-    /// A structure: ???
-    Structure(Structure),
-    
     /// A command.
     Invoke(Box<Invoke>),
     
     /// A pipe.
     Pipe(Box<Pipe>),
-}
-
-/// A (data-)structure node.
-#[derive(Clone, PartialEq)]
-pub enum Structure {
-    /// A list.
-    List(Vec<Expression>),
-    /// A dict.
-    Dict(FxHashMap<CompactString, Expression>),
 }
 
 /// A command (-node) to be evaluated.
@@ -73,7 +60,6 @@ impl std::fmt::Debug for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Expression::Value(l) => std::fmt::Debug::fmt(l, f),
-            Expression::Structure(s) => std::fmt::Debug::fmt(s, f),
             Expression::Invoke(c) => write!(f, "({:?})", c),
             Expression::Pipe(p) => {
                 write!(f, "({:?}", p.source)?;
@@ -84,15 +70,6 @@ impl std::fmt::Debug for Expression {
                 }
                 write!(f, ")")
             },
-        }
-    }
-}
-
-impl std::fmt::Debug for Structure {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::List(l) => std::fmt::Debug::fmt(l, f),
-            Self::Dict(s) => std::fmt::Debug::fmt(s, f),
         }
     }
 }

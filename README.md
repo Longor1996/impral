@@ -61,11 +61,11 @@ Following is a list of possible literals:
 - **Lists**: A list can be created in two ways...
   - Trough syntax: `[item1, item2, … itemN]` (the commas are optional!)
   - By command: `list item1 item2 … itemN`
-- **Maps**: A map, too, can be created in two ways...
+- **Dicts**: A dictionary, too, can be created in two ways...
   - Trough syntax: `{ key1: val1, key2: val2, …, keyN: valN}`
     > There *must* be one or more `,` between the key-value pairs;
     > there *may* be a `,` before the `}`.
-  - By command: `mmap key1 val1 key2 val2 … keyN valN`
+  - By command: `dict key1 val1 key2 val2 … keyN valN`
 
 ### References
 
