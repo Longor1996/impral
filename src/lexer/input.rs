@@ -16,7 +16,7 @@ pub struct PosIter<'s> {
 impl<'s> From<CharIndices<'s>> for PosIter<'s> {
     /// Creates a new [`PosIter`] from the given [`CharIndices`].
     fn from(iter: CharIndices<'s>) -> Self {
-        Self { iter, lpos: 0, line: 0 }
+        Self { iter, lpos: 0, line: 1 }
     }
 }
 

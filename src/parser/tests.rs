@@ -29,19 +29,20 @@ fn chk(input: &str) -> Result<(), ParseError> {
 fn sizes() {
     use std::mem::size_of;
     
-    eprintln!("SizeOf µSTR = {}", size_of::<CompactString>());
-    eprintln!("SizeOf [()] = {}", size_of::<Vec<()>>());
+    eprintln!("SizeOf µSTR  = {}", size_of::<CompactString>());
+    eprintln!("SizeOf [Byt] = {}", size_of::<Vec<Byt>>());
+    eprintln!("SizeOf ->Byt = {}", size_of::<Box<Byt>>());
     eprintln!("SizeOf LEX.L = {}", size_of::<Literal>());
     eprintln!("SizeOf LEX.S = {}", size_of::<Symbol>());
-    eprintln!("SizeOf AST.E = {}", size_of::<Expression>());
-    eprintln!("SizeOf [AST.E;1] = {}", size_of::<SmallVec<[Expression;1]>>());
+    eprintln!("SizeOf AST = {}", size_of::<Expression>());
     eprintln!("- SizeOf AST.S = {}", size_of::<Structure>());
-    eprintln!("- SizeOf AST.R = {}", size_of::<ReferenceRoot>());
     eprintln!("- SizeOf AST.I = {}", size_of::<Invoke>());
+    eprintln!("- SizeOf AST.P = {}", size_of::<Pipe>());
+    eprintln!("SizeOf [AST;1] = {}", size_of::<SmallVec<[Expression;1]>>());
     //eprintln!("SizeOf EXE.V = {}", size_of::<crate::values::ValContainer>());
     
     //assert!(size_of::<crate::values::ValContainer>() == 8, "The size of a ValContainer-struct should be exactly 8 bytes.");
-    assert!(size_of::<Invoke>() <= 128, "The size of an Invoke-struct should be below 128 bytes.");
+    assert!(dbg!(size_of::<Invoke>() <= 128), "The size of an Invoke-struct should be below 128 bytes.");
 }
 
 #[test]
@@ -64,6 +65,18 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("180.foobar")?;
     chk("\"Hello, World!\"")?;
     chk("\"Oooops...")?;
+    chk("$")?;
+    chk("$$")?;
+    chk("$_")?;
+    chk("$n")?;
+    chk("$abcdef")?;
+    chk("$_0123456789_")?;
+    chk("@_")?;
+    chk("@abcdef")?;
+    chk("@'quoted string'")?;
+    chk("@\"quoted string\"")?;
+    chk("@67e55044-10b1-426f-9247-bb680e5fe0c8")?;
+    //chk("$ $$ $$ $$")?;
     chk("0x[FF 01 02 03 04]")?;
     chk("0d[-1 +1 -1 +1 -1]")?;
     chk("[1, 2, 3, 4, 5,]")?;
@@ -128,7 +141,7 @@ fn should_succeed() -> Result<(), ParseError> {
     
     chk("gamerules +foo -bar")?;
     chk("e get U67e55044-10b1-426f-9247-bb680e5fe0c8")?;
-    chk("e get @U67e55044-10b1-426f-9247-bb680e5fe0c8")?;
+    chk("e get @67e55044-10b1-426f-9247-bb680e5fe0c8")?;
     
     Ok(())
 }

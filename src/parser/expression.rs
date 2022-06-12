@@ -109,7 +109,7 @@ pub fn parse_expression(
     Ok(expr)
 }
 
-/// Parses a `TokenStream` into an item (piece of an expression).
+/// Parses a `TokenStream` into a pipe.
 pub fn parse_pipe(
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     source: Expression
@@ -189,48 +189,6 @@ pub fn parse_item(
             
             _ => unreachable!("encountered a token-group of unknown kind")
         })
-    }
-    
-    // A global variable?
-    if let TokenContent::Symbol(Symbol::At) = token.content {
-        return Ok(match tokens.next() {
-            Some(Token {
-                content: TokenContent::Literal(Literal::Str(s)), ..
-            }) => Expression::Reference(ReferenceRoot::Global(s)),
-            
-            Some(Token {
-                content: TokenContent::Literal(Literal::Byt(b)), ..
-            }) => Expression::Reference(ReferenceRoot::Unique(*b)),
-            
-            Some(t) => return Err(ParseError::ExpectButGot("a global variable name".into(), format!("{}", t).into())),
-            
-            None => return Err(ParseError::ExpectButEnd("a global variable name")),
-        })
-    }
-    
-    // A local variable?
-    if let TokenContent::Symbol(Symbol::DollarSign) = token.content {
-        
-        if let Some(peek) = tokens.peek().cloned() {
-            // Named local variable.
-            if let TokenContent::Literal(Literal::Str(s)) = peek.content {
-                let _ = tokens.next();
-                return Ok(Expression::Reference(ReferenceRoot::Local(s)))
-            }
-            
-            // Numeric local variable.
-            if let TokenContent::Literal(Literal::Int(i)) = peek.content {
-                let _ = tokens.next();
-                return Ok(Expression::Reference(ReferenceRoot::Local(i.to_string().into())))
-            }
-        }
-        
-        return Ok(Expression::Reference(ReferenceRoot::Res))
-    }
-    
-    // A context variable?
-    if let TokenContent::Symbol(Symbol::DoubleDollar) = token.content {
-        return Ok(Expression::Reference(ReferenceRoot::Ctx))
     }
     
     return Err(ParseError::Unexpected(format!("token content: {:?}", token.content).into()))

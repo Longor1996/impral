@@ -5,14 +5,12 @@ use super::*;
 /// A expression node.
 #[derive(Clone, PartialEq)]
 pub enum Expression {
-    /// A value literal.
+    /// A value: A lone piece of data.
     Value(Literal),
     
-    /// A structure literal.
+    // TODO: Convert list & dict structures into invokes and erase this variant.
+    /// A structure: ???
     Structure(Structure),
-    
-    /// A reference literal.
-    Reference(ReferenceRoot),
     
     /// A command.
     Invoke(Box<Invoke>),
@@ -28,21 +26,6 @@ pub enum Structure {
     List(Vec<Expression>),
     /// A dict.
     Dict(FxHashMap<CompactString, Expression>),
-}
-
-/// A reference(/variable) node.
-#[derive(Clone, PartialEq)]
-pub enum ReferenceRoot {
-    /// Context Reference (`$$`)
-    Ctx,
-    /// Result Reference (`$`)
-    Res,
-    /// Local Reference (`$NAME`)
-    Local(CompactString),
-    /// Unique Reference (`@U...`)
-    Unique(Byt),
-    /// Global Reference (`@NAME`)
-    Global(CompactString),
 }
 
 /// A command (-node) to be evaluated.
@@ -91,7 +74,6 @@ impl std::fmt::Debug for Expression {
         match self {
             Expression::Value(l) => std::fmt::Debug::fmt(l, f),
             Expression::Structure(s) => std::fmt::Debug::fmt(s, f),
-            Expression::Reference(r) => std::fmt::Debug::fmt(r, f),
             Expression::Invoke(c) => write!(f, "({:?})", c),
             Expression::Pipe(p) => {
                 write!(f, "({:?}", p.source)?;
@@ -111,18 +93,6 @@ impl std::fmt::Debug for Structure {
         match self {
             Self::List(l) => std::fmt::Debug::fmt(l, f),
             Self::Dict(s) => std::fmt::Debug::fmt(s, f),
-        }
-    }
-}
-
-impl std::fmt::Debug for ReferenceRoot {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Ctx => write!(f, "$$"),
-            Self::Res => write!(f, "$"),
-            Self::Local(l) => write!(f, "${}", l),
-            Self::Unique(u) => write!(f, "@U{}", uuid::Uuid::from_slice(&u.data).ok().unwrap()),
-            Self::Global(g) => write!(f, "@{}", g),
         }
     }
 }

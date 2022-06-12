@@ -50,12 +50,74 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         
         // Check for symbol pairings...
         if let Ok(symbol) = peekstr.parse::<Symbol>() {
-            input.next(); // drop the next char too
+            input.next(); // drop the paired char
+            
+            if symbol == Symbol::DoubleDollar {
+                // Context Reference
+                return Some((index, index+2, Literal::RefCtx).into());
+            }
+            
             return Some((index, index+2, symbol).into());
         }
         
         // Check for individual symbols...
         if let Ok(symbol) = currstr.parse::<Symbol>() {
+            
+            if symbol == Symbol::At { // '@' object references
+                
+                // TODO: Parse Object Reference (ID)
+                // (requires integer lexing to be extracted)
+                
+                if let Some((start, end, uuid)) = try_lex_uuid(&mut input, current.idx) {
+                    return Some((start, end, Literal::ObjUid(uuid)).into());
+                }
+                
+                // Parse Object Key Reference
+                if let Some(PosChar { char, .. }) = input.peek().cloned() {
+                    // Check for start of bareword...
+                    if char.is_alphabetic() || char == '_' {
+                        input.next(); // drop start
+                        let (start, end, bareword)
+                            = try_lex_bareword(&mut input, index, char);
+                        
+                        return Some((start, end, Literal::ObjKey(bareword)).into());
+                    }
+                    
+                    // Check for start of double-quoted string...
+                    if char == '"' {
+                        input.next(); // drop start
+                        let (start, end, string) = try_lex_string(&mut input, index, char, '"');
+                        return Some((start, end, Literal::ObjKey(string)).into());
+                    }
+                    
+                    // Check for start of single-quoted string...
+                    if char == '\'' {
+                        input.next(); // drop start
+                        let (start, end, string) = try_lex_string(&mut input, index, char, '\'');
+                        return Some((start, end, Literal::ObjKey(string)).into());
+                    }
+                }
+                
+                panic!("Failed to parse object reference (@) at {}:{}", current.line, current.col);
+            }
+            
+            if symbol == Symbol::DollarSign {
+                // Parse Local Reference
+                if let Some(PosChar { char, .. }) = input.peek().cloned() {
+                    // Check for start of bareword...
+                    if char.is_alphabetic() || char == '_' {
+                        input.next(); // drop start
+                        let (start, end, bareword)
+                            = try_lex_bareword(&mut input, index, char);
+                        
+                        return Some((start, end, Literal::RefVar(bareword)).into());
+                    }
+                }
+                
+                // Result Reference
+                return Some((index, index+1, Literal::RefRes).into());
+            }
+            
             // '+' and '-' are handled elsewhere...
             if ! (symbol == Symbol::Plus || symbol == Symbol::Dash) {
                 // ...everything else is immediately turned into a token.
@@ -63,44 +125,15 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             }
         }
         
+        // Check for start of UUID...
+        if *current == 'U' {
+            if let Some((start, end, uuid)) = try_lex_uuid(&mut input, current.idx) {
+                return Some((start, end, Literal::Uid(uuid)).into());
+            }
+        }
+        
         // Check for start of bareword...
         if current.is_alphabetic() || *current == '_' {
-            if *current == 'U' {
-                // A uuid is always 36 ascii chars long...
-                let mut uuid_str: [u8; 36] = [b' '; 36];
-                
-                // Try to peek-convert-collect 36 chars into our buffer...
-                input // Peek
-                    .peek_amount(36)
-                    .iter()
-                    .flatten()
-                    // Convert
-                    .filter_map(|c| std::convert::TryInto::<u8>::try_into(c.char).ok())
-                    // Collect
-                    .enumerate()
-                    .for_each(|(i,c)| uuid_str[i] = c)
-                ;
-                
-                match uuid::Uuid::try_parse_ascii(&uuid_str) {
-                    Ok(uuid) => {
-                        // We must consume the chars we've read!
-                        for _ in 0..36 { input.next(); }
-                        
-                        let start = index;
-                        let end = index + 36;
-                        
-                        let byt = Byt {
-                            kind: "uuid".into(),
-                            data: uuid.as_bytes().to_vec()
-                        };
-                        
-                        return Some((start, end,
-                            Literal::Byt(Box::new(byt))
-                        ).into());
-                    },
-                    Err(err) => panic!("failed to parse uuid @{index}: {err}"),
-                };
-            }
             
             let (start, end, bareword) = try_lex_bareword(&mut input, index, *current);
             
@@ -350,6 +383,34 @@ fn try_lex_string(input: &mut PosInput, start: usize, current: char, delimiter: 
     }
     
     (start, end, buffer)
+}
+
+/// Try lex uuid.
+fn try_lex_uuid(input: &mut PosInput, start: usize) -> Option<(usize, usize, uuid::Uuid)> {
+    
+    // A uuid is always 36 ascii chars long...
+    let mut uuid_str: [u8; 36] = [b' '; 36];
+    
+    // Try to peek-convert-collect 36 chars into our buffer...
+    let len = input // Peek
+        .peek_amount(36)
+        .iter()
+        .flatten()
+        // Convert
+        .filter_map(|c| std::convert::TryInto::<u8>::try_into(c.char).ok())
+        // Collect
+        .enumerate()
+        .inspect(|(i,c)| uuid_str[*i] = *c)
+        .count()
+    ;
+    
+    if let Ok(uuid) = uuid::Uuid::try_parse_ascii(&uuid_str) {
+        // We must consume the chars we've read!
+        for _ in 0..len { input.next(); }
+        return Some((start, start + len, uuid));
+    }
+    
+    None
 }
 
 /// Attempts to convert a bareword into a constant literal.
