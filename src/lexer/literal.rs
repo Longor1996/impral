@@ -11,9 +11,6 @@ pub enum Literal {
     /// Boolean
     Bool(bool),
     
-    /// UTF-Character
-    Char(char),
-    
     /// Signed 64-bit Integer Number
     Int(i64),
     
@@ -42,7 +39,6 @@ impl Literal {
         match self {
             Literal::Nil => "nil",
             Literal::Bool(_) => "boolean",
-            Literal::Char(_) => "character",
             Literal::Int(_) => "integer-number",
             Literal::Dec(_) => "decimal-number",
             Literal::Str(_) => "char-string",
@@ -57,7 +53,6 @@ impl std::fmt::Debug for Literal {
             Literal::Nil => write!(f, "null"),
             Literal::Bool(true) => write!(f, "true"),
             Literal::Bool(false) => write!(f, "false"),
-            Literal::Char(v) => write!(f, "{}", v),
             Literal::Int(v) => write!(f, "{}i", v),
             Literal::Dec(v) => write!(f, "{}f", v),
             Literal::Str(v) => write!(f, "{}", v),
