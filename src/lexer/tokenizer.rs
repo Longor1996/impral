@@ -64,9 +64,41 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         
         // Check for start of bareword...
         if current.is_alphabetic() || current == '_' {
-            
             if current == 'U' {
-                // TODO: Check and parse UUID
+                // A uuid is always 36 ascii chars long...
+                let mut uuid_str: [u8; 36] = [b' '; 36];
+                
+                // Try to peek-convert-collect 36 chars into our buffer...
+                input // Peek
+                    .peek_amount(36)
+                    .iter()
+                    .flatten()
+                    // Convert
+                    .filter_map(|(_,c)| std::convert::TryInto::<u8>::try_into(*c).ok())
+                    // Collect
+                    .enumerate()
+                    .for_each(|(i,c)| uuid_str[i] = c)
+                ;
+                
+                match uuid::Uuid::try_parse_ascii(&uuid_str) {
+                    Ok(uuid) => {
+                        // We must consume the chars we've read!
+                        for _ in 0..36 { input.next(); }
+                        
+                        let start = index;
+                        let end = index + 36;
+                        
+                        let byt = Byt {
+                            kind: "uuid".into(),
+                            data: uuid.as_bytes().to_vec()
+                        };
+                        
+                        return Some((start, end,
+                            Literal::Byt(Box::new(byt))
+                        ).into());
+                    },
+                    Err(err) => panic!("failed to parse uuid @{index}: {err}"),
+                };
             }
             
             let (start, end, bareword) = try_lex_bareword(&mut input, index, current);
@@ -128,11 +160,12 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                 };
             }
             
+            // TODO: Break array parsing out into a new function.
             if !bsign {
                 if let Some((_, '[')) = input.peek().copied() {
-                    // Array of bytes!
+                    // Array of numbers!
                     input.next(); // eat [
-                    let mut array: Vec<Token> = vec![];
+                    let mut array: Vec<Token> = vec![]; // TODO: Make this an i64-vec
                     
                     loop {
                         if let Some((index, ']')) = input.peek().copied() {

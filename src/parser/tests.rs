@@ -127,6 +127,8 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("set $$.motion: * 0.5 $")?;
     
     chk("gamerules +foo -bar")?;
+    chk("e get U67e55044-10b1-426f-9247-bb680e5fe0c8")?;
+    chk("e get @U67e55044-10b1-426f-9247-bb680e5fe0c8")?;
     
     Ok(())
 }

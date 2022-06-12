@@ -20,9 +20,9 @@ rustc-hash = "1.1.0"
 thiserror = "1.0.31"
 strum = "0.24.0"
 strum_macros = "0.24.0"
+uuid = "1.1.1"
 
 #nanval = "0.1.1"
-#uuid = "^0.8"
 
 #[dependencies.tagged-box]
 #version = "0.1.1"

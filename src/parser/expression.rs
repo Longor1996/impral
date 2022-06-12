@@ -198,6 +198,10 @@ pub fn parse_item(
                 content: TokenContent::Literal(Literal::Str(s)), ..
             }) => Expression::Reference(ReferenceRoot::Global(s)),
             
+            Some(Token {
+                content: TokenContent::Literal(Literal::Byt(b)), ..
+            }) => Expression::Reference(ReferenceRoot::Unique(*b)),
+            
             Some(t) => return Err(ParseError::ExpectButGot("a global variable name".into(), format!("{}", t).into())),
             
             None => return Err(ParseError::ExpectButEnd("a global variable name")),

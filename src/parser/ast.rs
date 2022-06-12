@@ -39,6 +39,8 @@ pub enum ReferenceRoot {
     Res,
     /// Local Reference (`$NAME`)
     Local(CompactString),
+    /// Unique Reference (`@U...`)
+    Unique(Byt),
     /// Global Reference (`@NAME`)
     Global(CompactString),
 }
@@ -119,6 +121,7 @@ impl std::fmt::Debug for ReferenceRoot {
             Self::Ctx => write!(f, "$$"),
             Self::Res => write!(f, "$"),
             Self::Local(l) => write!(f, "${}", l),
+            Self::Unique(u) => write!(f, "@U{}", uuid::Uuid::from_slice(&u.data).ok().unwrap()),
             Self::Global(g) => write!(f, "@{}", g),
         }
     }
