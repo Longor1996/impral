@@ -24,7 +24,16 @@ pub enum Literal {
     Str(CompactString),
     
     /// Bytes
-    Byt(Vec<u8>)
+    Byt(Box<Byt>)
+}
+
+/// A possibly-typed buffer of bytes.
+#[derive(Clone, PartialEq)]
+pub struct Byt {
+    /// The type of the data, or an empty string.
+    pub kind: CompactString,
+    /// The data.
+    pub data: Vec<u8>
 }
 
 impl Literal {
@@ -55,7 +64,7 @@ impl std::fmt::Debug for Literal {
             Literal::Byt(v) => {
                 write!(f, "0x[")?;
                 let mut tail = false;
-                for byte in v {
+                for byte in &v.data {
                     if tail {
                         write!(f, " ")?;
                     }
