@@ -97,12 +97,15 @@ fn should_succeed() -> Result<(), ParseError> {
     
     println!(": List Structures");
     chk("[1, 2, 3, 4, 5,]")?;
-    chk("[1 2 3 4 5]")?;
+    chk("[1  2  3  4  5 ]")?;
     chk("[foo bar baz]")?;
+    chk("[foo bar [foo bar baz]]")?;
+    chk("[foo bar [foo bar [foo bar baz]]]")?;
     
     println!(": Dict Structures");
     chk("{a=1, b=2, c=-3,}")?;
-    chk("{a=1 b=2 c=-3}")?;
+    chk("{a=1  b=2  c=-3 }")?;
+    chk("{a=null b={a=1, b=2, c=-3,} c={a=1 b=2 c=-3}}")?;
     
     println!(": Operators");
     chk("= 1 2 3")?;

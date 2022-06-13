@@ -13,81 +13,67 @@ pub fn parse_expression(
     // Try to parse an expression item...
     let mut expr = parse_item(tokens, start_cmd)?;
     
-    while let Some(token) = tokens.peek() {
-        match token {
-            // Dot? Dereference!
-            Token {
-                content: TokenContent::Symbol(Symbol::Dot), ..
-            } => {
-                drop(tokens.next()); // drop the dot
-                expr = Expression::Deref(parse_deref(tokens, expr)?);
-            },
-            
-            // Range? Parse Range!
-            Token {
-                content: TokenContent::Symbol(Symbol::Range), ..
-            } => {
-                drop(tokens.next()); // drop the range
-                
-                let mut range = Invoke {
-                    name: "range".into(),
-                    pos_args: smallvec![expr],
-                    nom_args: Default::default(),
-                };
-                
-                let inner = parse_expression(tokens, false, false)?;
-                range.pos_args.push(inner);
-                
-                expr = Expression::Invoke(range.into());
-            },
-            
-            // QuestionMark? Existence check!
-            Token {
-                content: TokenContent::Symbol(Symbol::QuestionMark), ..
-            } => {
-                drop(tokens.next()); // drop the questionmark
-                expr = Expression::Invoke(Invoke {
-                    name: "exists".into(),
-                    pos_args: smallvec![expr],
-                    nom_args: Default::default(),
-                }.into());
-            },
-            
-            // Tilde? Relation!
-            Token {
-                content: TokenContent::Symbol(Symbol::Tilde), ..
-            } => {
-                drop(tokens.next()); // drop the tilde
-                let to = parse_expression(tokens, false, false)?;
-                expr = Expression::Invoke(Invoke {
-                    name: "relative".into(),
-                    pos_args: smallvec![expr, to],
-                    nom_args: Default::default(),
-                }.into());
-            },
-            
-            // Circle? deg2rad!
-            Token {
-                content: TokenContent::Symbol(Symbol::Circle), ..
-            } => {
-                drop(tokens.next()); // drop the circle
-                expr = Expression::Invoke(Invoke {
-                    name: "deg2rad".into(),
-                    pos_args: smallvec![expr],
-                    nom_args: Default::default(),
-                }.into());
-            },
-            
-            // Pipe? Pipe!
-            Token {
-                content: TokenContent::Symbol(Symbol::Pipe), ..
-            }  if start_pipe => {
-                expr = Expression::Pipe(parse_pipe(tokens, expr)?);
-            },
-            
-            // Ignore everything else...
-            _ => break
+    // Postfix operator parsing...
+    loop {
+        // Dot? Dereference!
+        if consume_symbol(tokens, Symbol::Dot) {
+            expr = Expression::Deref(parse_deref(tokens, expr)?);
+            continue;
         }
+        
+        // Range? Parse Range!
+        if consume_symbol(tokens, Symbol::Range) {
+            let mut range = Invoke {
+                name: "range".into(),
+                pos_args: smallvec![expr],
+                nom_args: Default::default(),
+            };
+            
+            let inner = parse_expression(tokens, false, false)?;
+            range.pos_args.push(inner);
+            
+            expr = Expression::Invoke(range.into());
+            continue;
+        }
+        
+        // QuestionMark? Existence check!
+        if consume_symbol(tokens, Symbol::QuestionMark) {
+            expr = Expression::Invoke(Invoke {
+                name: "exists".into(),
+                pos_args: smallvec![expr],
+                nom_args: Default::default(),
+            }.into());
+            continue;
+        }
+        
+        // Tilde? Relation!
+        if consume_symbol(tokens, Symbol::Tilde) {
+            let to = parse_expression(tokens, false, false)?;
+            expr = Expression::Invoke(Invoke {
+                name: "relative".into(),
+                pos_args: smallvec![expr, to],
+                nom_args: Default::default(),
+            }.into());
+            continue;
+        }
+        
+        // Circle? deg2rad!
+        if consume_symbol(tokens, Symbol::Circle) {
+            expr = Expression::Invoke(Invoke {
+                name: "deg2rad".into(),
+                pos_args: smallvec![expr],
+                nom_args: Default::default(),
+            }.into());
+            continue;
+        }
+        
+        // Pipe? Pipe!
+        if start_pipe && consume_symbol(tokens, Symbol::Pipe) {
+            expr = Expression::Pipe(parse_pipe(tokens, expr)?);
+            continue;
+        }
+        
+        break;
     }
     
     Ok(expr)
@@ -108,14 +94,7 @@ pub fn parse_deref(
         })
     };
     
-    let fallible = if let Some(Token {
-        content: TokenContent::Symbol(Symbol::QuestionMark), ..
-    }) = tokens.peek() {
-        drop(tokens.next()); // drop the question-mark
-        true
-    } else {
-        false
-    };
+    let fallible = consume_symbol(tokens, Symbol::QuestionMark);
     
     let member = match tokens.next() {
         Some(Token {
@@ -140,8 +119,7 @@ pub fn parse_pipe(
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     expr: Expression
 ) -> Result<Box<Pipe>, ParseError> {
-    let mut pipe = if
-    let Expression::Pipe(pipe) = expr {
+    let mut pipe = if let Expression::Pipe(pipe) = expr {
         pipe
     } else {
         Box::new(Pipe {
@@ -150,18 +128,19 @@ pub fn parse_pipe(
         })
     };
     
-    while let Some(Token {
-        content: TokenContent::Symbol(Symbol::Pipe), ..
-    }) = tokens.peek() {
-        drop(tokens.next());
-        
-        let filter = matches!(tokens.peek(), Some(Token {content: TokenContent::Symbol(Symbol::QuestionMark),..}));
-        if filter {drop(tokens.next())}
+    loop {
+        let filter = consume_symbol(tokens, Symbol::QuestionMark);
         
         pipe.stages.push(PipeSeg {
             filter,
             invoke: parse_expression(tokens, true, false)?,
         });
+        
+        if consume_symbol(tokens, Symbol::Pipe) {
+            continue;
+        }
+        
+        break;
     }
     
     Ok(pipe)

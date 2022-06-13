@@ -27,6 +27,21 @@ pub fn consume_if(
     }
 }
 
+/// Consume string...
+pub fn consume_string(
+    tokens: &mut PeekableTokenStream<impl TokenStream>
+) -> Option<CompactString> {
+    if let Some(Token { content: TokenContent::Literal(literal), .. }) = tokens.peek() {
+        if let Literal::Str(str) = literal {
+            let str = str.clone();
+            tokens.next();
+            return Some(str)
+        }
+    };
+    
+    None
+}
+
 /// Match a symbol.
 pub fn match_symbol(
     tokens: &mut PeekableTokenStream<impl TokenStream>,

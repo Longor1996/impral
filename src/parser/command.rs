@@ -54,152 +54,122 @@ pub fn parse_command_body(
     let mut no_more_pos_args = false;
     
     loop {
-        match tokens.peek().cloned() {
-            Some(Token {
-                content: TokenContent::Symbol(s), ..
-            })
-                if terminator.map_or(false, |t| t == s)
-            => {
-                // We do NOT drop the terminator here...
-                break // natural end of command, due to terminator.
-            },
+        if let Some(terminator) = terminator {
+            // We MATCH, but NOT drop, the terminator...
+            if match_symbol(tokens, terminator) {
+                break; // natural end of command, due to terminator
+            }
+        }
+        
+        if match_symbol(tokens, Symbol::Semicolon) {
+            // We MATCH, but NOT drop, the semicolon...
+            break; // natural end of command, due to semicolon
+        }
+        
+        if consume_symbol(tokens, Symbol::DoubleDot) {
+            let subcommand = parse_command(tokens, None)?;
+            cmd.pos_args.push(subcommand.into());
+            break; // natural end of command, due to subcommand
+        }
+        
+        if consume_symbol(tokens, Symbol::DoubleAmpersand) {
+            let previous = std::mem::replace(&mut cmd, Invoke {
+                name: "if-then".into(),
+                pos_args: Default::default(),
+                nom_args: Default::default(),
+            });
             
-            Some(Token {
-                content: TokenContent::Symbol(Symbol::Semicolon), ..
-            }) => {
-                // We do NOT drop the semicolon!
-                //drop(tokens.next());
-                break; // natural end of command, due to semicolon
-            },
+            cmd.pos_args.push(previous.into());
             
-            Some(Token {
-                content: TokenContent::Symbol(Symbol::DoubleDot), ..
-            }) => {
-                drop(tokens.next());
-                let subcommand = parse_command(tokens, None)?;
-                cmd.pos_args.push(subcommand.into());
-                break; // natural end of command, due to subcommand
-            },
+            let subcommand = parse_command(tokens, None)?;
+            cmd.pos_args.push(subcommand.into());
+            break; // natural end of command, due to IF-THEN wrapper command
+        }
+        
+        if consume_symbol(tokens, Symbol::DoublePipe) {
+            let previous = std::mem::replace(&mut cmd, Invoke {
+                name: "if-else".into(),
+                pos_args: Default::default(),
+                nom_args: Default::default(),
+            });
             
-            Some(Token {
-                content: TokenContent::Symbol(Symbol::DoubleAmpersand), ..
-            }) => {
-                drop(tokens.next());
-                
-                let previous = std::mem::replace(&mut cmd, Invoke {
-                    name: "if-then".into(),
-                    pos_args: Default::default(),
-                    nom_args: Default::default(),
-                });
-                
-                cmd.pos_args.push(previous.into());
-                
-                let subcommand = parse_command(tokens, None)?;
-                cmd.pos_args.push(subcommand.into());
-                break; // natural end of command, due to subcommand
-            },
+            cmd.pos_args.push(previous.into());
             
-            Some(Token {
-                content: TokenContent::Symbol(Symbol::DoublePipe), ..
-            }) => {
-                drop(tokens.next());
-                
-                let previous = std::mem::replace(&mut cmd, Invoke {
-                    name: "if-else".into(),
-                    pos_args: Default::default(),
-                    nom_args: Default::default(),
-                });
-                
-                cmd.pos_args.push(previous.into());
-                
-                let subcommand = parse_command(tokens, None)?;
-                cmd.pos_args.push(subcommand.into());
-                break; // natural end of command, due to subcommand
-            },
-            
-            Some(Token {
-                content: TokenContent::Symbol(s), ..
-            })
-                if s.is_end_delimiter()
-            => {
-                drop(tokens.next());
-                break // natural end of command, due to delimiter.
-            },
-            
-            Some(Token {
-                content: TokenContent::Symbol(Symbol::Pipe), ..
-            }) => {
-                break; // Encountered a pipe; command must end here.
-            },
-            
-            None => break, // natural end of command, due to EOS.
-            
+            let subcommand = parse_command(tokens, None)?;
+            cmd.pos_args.push(subcommand.into());
+            break; // natural end of command, due to IF-ELSE wrapper command
+        }
+        
+        if consume_if(tokens, |tc|
+            matches!(tc, TokenContent::Symbol(peeked) if peeked.is_end_delimiter())
+        ) {
+            break // natural end of command, due to delimiter.
+        }
+        
+        if match_symbol(tokens, Symbol::Pipe) {
+            break; // Encountered a pipe; command must end here.
+        }
+        
+        if consume_symbol(tokens, Symbol::Dash) {
+            if let Some(Token {
+                content: TokenContent::Literal(Literal::Str(s)), ..
+            }) = tokens.next() {
+                cmd.nom_args.insert(s, Expression::Value(Literal::Bool(false)));
+                no_more_pos_args = true;
+                continue;
+            } else {
+                return Err(ParseError::ExpectButGot("a flag".into(), "something else".into()))
+            }
+        }
+        
+        if consume_symbol(tokens, Symbol::Plus) {
+            if let Some(Token {
+                content: TokenContent::Literal(Literal::Str(s)), ..
+            }) = tokens.next() {
+                cmd.nom_args.insert(s, Expression::Value(Literal::Bool(true)));
+                no_more_pos_args = true;
+                continue;
+            } else {
+                return Err(ParseError::ExpectButGot("a flag".into(), "something else".into()))
+            }
+        }
+        
+        if let Some(token) = tokens.peek().cloned() {
             // Attempt parsing arguments...
-            Some(token) => {
-                // BAREWORD=
-                // -BAREWORD
-                // +BAREWORD
-                // EXPRESSION
+            // BAREWORD=
+            // -BAREWORD
+            // +BAREWORD
+            // EXPRESSION
+            
+            // ...starting with what may just be a expression...
+            let expr = parse_expression(tokens, false, false)?;
+            
+            if consume_symbol(tokens, Symbol::EqualSign) {
+                // (l)expr into key
+                let lexpr = match expr {
+                    Expression::Value(val) => match val {
+                        Literal::Str(s) => s,
+                        val => return Err(ParseError::ExpectButGot("a parameter name".into(), format!("{:?}", val).into())),
+                    },
+                    _ => return Err(ParseError::ExpectButGot("a parameter name".into(), format!("{expr:?}").into())),
+                };
                 
-                if token == Symbol::Dash {
-                    drop(tokens.next());
-                    if let Some(Token {
-                        content: TokenContent::Literal(Literal::Str(s)), ..
-                    }) = tokens.next() {
-                        cmd.nom_args.insert(s, Expression::Value(Literal::Bool(false)));
-                        no_more_pos_args = true;
-                        continue;
-                    } else {
-                        return Err(ParseError::ExpectButGot("a parameter name".into(), "something else".into()))
-                    }
+                // parse value
+                let rexpr = parse_expression(tokens, false, false)?;
+                
+                cmd.nom_args.insert(lexpr, rexpr);
+                no_more_pos_args = true;
+            } else {
+                if no_more_pos_args {
+                    return Err(ParseError::PosArgAfterNomArg(token.start))
                 }
                 
-                if token == Symbol::Plus {
-                    drop(tokens.next());
-                    if let Some(Token {
-                        content: TokenContent::Literal(Literal::Str(s)), ..
-                    }) = tokens.next() {
-                        cmd.nom_args.insert(s, Expression::Value(Literal::Bool(true)));
-                        no_more_pos_args = true;
-                        continue;
-                    } else {
-                        return Err(ParseError::ExpectButGot("a parameter name".into(), "something else".into()))
-                    }
-                }
-                
-                // ...starting with what may just be a expression...
-                let expr = parse_expression(tokens, false, false)?;
-                
-                if let Some(Token {
-                    content: TokenContent::Symbol(Symbol::EqualSign), ..
-                }) = tokens.peek() {
-                    // (l)expr into key
-                    let lexpr = match expr {
-                        Expression::Value(val) => match val {
-                            Literal::Str(s) => s,
-                            val => return Err(ParseError::ExpectButGot("a parameter name".into(), format!("{:?}", val).into())),
-                        },
-                        _ => return Err(ParseError::ExpectButGot("a parameter name".into(), "a symbol or command".into())),
-                    };
-                    
-                    // consume the '='
-                    drop(tokens.next());
-                    
-                    // parse value
-                    let rexpr = parse_expression(tokens, false, false)?;
-                    
-                    cmd.nom_args.insert(lexpr, rexpr);
-                    no_more_pos_args = true;
-                } else {
-                    if no_more_pos_args {
-                        return Err(ParseError::PosArgAfterNomArg(token.start))
-                    }
-                    
-                    // Don't care, push arg, go to next iter.
-                    cmd.pos_args.push(expr);
-                }
-            },
-        };
+                // Don't care, push arg, go to next iter.
+                cmd.pos_args.push(expr);
+            }
+        } else {
+            break // natural end of command, due to EOS.
+        }
     }
     
     Ok(cmd)
