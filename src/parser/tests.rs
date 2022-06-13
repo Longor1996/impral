@@ -46,11 +46,10 @@ fn sizes() {
 
 #[test]
 fn should_succeed() -> Result<(), ParseError> {
+    println!(": Constants");
     chk("null")?;
     chk("true")?;
     chk("false")?;
-    chk("12345")?;
-    chk("3.141")?;
     chk("NaN")?;
     chk("inf")?;
     chk("infinity")?;
@@ -60,29 +59,47 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("TAU")?;
     chk("EULER")?;
     chk("SQRT2")?;
+    
+    println!(": Numbers");
+    chk("12345")?;
+    chk("3.141")?;
     chk("180°")?;
     chk("180.foobar")?;
+    
+    println!(": Quoted Strings");
     chk("\"Hello, World!\"")?;
     chk("\"Oooops...")?;
+    
+    println!(": References");
     chk("$")?;
     chk("$$")?;
     chk("$_")?;
     chk("$n")?;
     chk("$abcdef")?;
     chk("$_0123456789_")?;
+    
+    println!(": Object References");
     chk("@_")?;
     chk("@abcdef")?;
     chk("@'quoted \" string'")?;
     chk("@\"quoted ' string\"")?;
     chk("@67e55044-10b1-426f-9247-bb680e5fe0c8")?;
     //chk("$ $$ $$ $$")?;
+    
+    println!(": Numeric Arrays");
     chk("0x[FF 01 02 03 04]")?;
     chk("0d[-1 +1 -1 +1 -1]")?;
+    
+    println!(": List Structures");
     chk("[1, 2, 3, 4, 5,]")?;
     chk("[1 2 3 4 5]")?;
     chk("[foo bar baz]")?;
+    
+    println!(": Dict Structures");
     chk("{a=1, b=2, c=-3,}")?;
     chk("{a=1 b=2 c=-3}")?;
+    
+    println!(": Operators");
     chk("= 1 2 3")?;
     chk("+ 1 2 3")?;
     chk("- 1 2 3")?;
@@ -90,10 +107,12 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("/ 1 2 3")?;
     chk("++ 1 2 3")?;
     chk("-- 1 2 3")?;
-    chk("chk $$")?;
-    chk("ß ßß")?;
     chk("<= 1 2 3")?;
     chk(">= 1 2 3")?;
+    chk("chk $$")?;
+    chk("ß ßß")?;
+    
+    println!(": Parameters");
     chk("test 1.234 2.345 1.99999 0.000001")?;
     chk("test 1 2 3")?;
     chk("test 1 2 3 a=4")?;
@@ -102,10 +121,16 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("test foo; bar baz")?;
     chk("test [1 2 3 4 5]")?;
     chk("test {a = 1, b=2, c=-3}")?;
+    
+    println!(": Pipes");
     chk("testA 1 2 3 | testB 4 5 6 | testC 7 8 9")?;
     chk("maybe-null |? accepts-null")?;
+    
+    println!(": Execution Modifiers");
     chk("conditional && execution")?;
     chk("alternative || execution")?;
+    
+    println!(": Examples");
     chk("echo \"Hello, World!\" @s.chat ")?;
     chk("tp @a 0 0 0")?;
     chk("tp @a @world.spawn")?;
