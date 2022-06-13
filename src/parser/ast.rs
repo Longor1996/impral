@@ -18,6 +18,9 @@ pub enum Expression {
     Pipe(Box<Pipe>),
 }
 
+/// A (small)vec of expression nodes.
+pub type ExpressionVec = SmallVec<[Expression; 1]>;
+
 /// A command (-node) to be evaluated.
 #[derive(Clone, Default, PartialEq)]
 pub struct Invoke {
@@ -27,7 +30,7 @@ pub struct Invoke {
     /// The positional arguments.
     ///
     /// As long as there is only one positional argument, there will be no direct heap allocation.
-    pub pos_args: SmallVec<[Expression; 1]>,
+    pub pos_args: ExpressionVec,
     
     /// The nominal/named arguments.
     pub nom_args: FxHashMap<CompactString, Expression>,

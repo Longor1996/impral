@@ -5,8 +5,8 @@ use super::*;
 /// Parses the stream of tokens into a list.
 pub fn parse_list(
     tokens: &mut PeekableTokenStream<impl TokenStream>
-) -> Result<SmallVec<[Expression; 1]>, ParseError> {
-    let mut list = SmallVec::<[Expression; 1]>::default();
+) -> Result<ExpressionVec, ParseError> {
+    let mut list = ExpressionVec::default();
     
     loop {
         if tokens.peek().is_none() {

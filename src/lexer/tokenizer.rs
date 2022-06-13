@@ -193,7 +193,7 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                 };
             }
             
-            // TODO: Break array parsing out into a new function.
+            // TODO: Break numeric array parsing out into a new function.
             if !bsign {
                 if let Some(PosChar { char: '[', .. }) = input.peek().copied() {
                     // Array of numbers!
@@ -390,6 +390,7 @@ fn try_lex_uuid(input: &mut PosInput, start: usize) -> Option<(usize, usize, uui
     // A uuid is always 36 ascii chars long...
     let mut uuid_str: [u8; 36] = [b' '; 36];
     
+    // TODO: Make this simpler/safer?
     // Try to peek-convert-collect 36 chars into our buffer...
     let len = input // Peek
         .peek_amount(36)

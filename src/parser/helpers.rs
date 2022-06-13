@@ -31,12 +31,12 @@ pub fn consume_if(
 pub fn consume_string(
     tokens: &mut PeekableTokenStream<impl TokenStream>
 ) -> Option<CompactString> {
-    if let Some(Token { content: TokenContent::Literal(literal), .. }) = tokens.peek() {
-        if let Literal::Str(str) = literal {
-            let str = str.clone();
-            tokens.next();
-            return Some(str)
-        }
+    if let Some(Token {
+        content: TokenContent::Literal(Literal::Str(str)), ..
+    }) = tokens.peek() {
+        let str = str.clone();
+        tokens.next();
+        return Some(str)
     };
     
     None

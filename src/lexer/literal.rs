@@ -138,6 +138,23 @@ pub fn bareword_format(input: &str) -> Cow<str> {
     Cow::Borrowed(input)
 }
 
+/// Check if the given string is a bareword.
+pub fn is_bareword(input: &str) -> bool {
+    for (i, ch) in input.char_indices() {
+        if i == 0 {
+            if is_bareword_start(ch) {
+                continue;
+            }
+        } else if is_bareword_part(ch) {
+            continue;
+        }
+        
+        return false
+    }
+    
+    true
+}
+
 /// Check if the given character indicates the start of a bareword.
 pub fn is_bareword_start(ch: char) -> bool {
     ch.is_alphabetic() || ch == '_'

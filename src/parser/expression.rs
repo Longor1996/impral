@@ -96,14 +96,10 @@ pub fn parse_deref(
     
     let fallible = consume_symbol(tokens, Symbol::QuestionMark);
     
-    let member = match tokens.next() {
-        Some(Token {
-            content: TokenContent::Literal(Literal::Str(name)), ..
-        }) => name,
-        Some(Token {
-            content, ..
-        }) => return Err(ParseError::ExpectButGot("member name".into(), format!("{content:?}").into())),
-        None => return Err(ParseError::ExpectButEnd("member name")),
+    let member = if let Some(name) = consume_string(tokens) {
+        name
+    } else {
+        return Err(ParseError::ExpectButGot("member name".into(), "something else".into()))
     };
     
     chain.stages.push(DerefSeg {
