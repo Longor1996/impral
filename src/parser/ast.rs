@@ -11,6 +11,9 @@ pub enum Expression {
     /// A command.
     Invoke(Box<Invoke>),
     
+    /// A dereference.
+    Deref(Box<DerefChain>),
+    
     /// A pipe.
     Pipe(Box<Pipe>),
 }
@@ -50,6 +53,25 @@ pub struct PipeSeg {
     pub invoke: Expression,
 }
 
+/// A dereference chain.
+#[derive(Clone, PartialEq)]
+pub struct DerefChain {
+    /// The expression that is being dereferenced.
+    pub source: Expression,
+    
+    /// The segments of the deref chain.
+    pub stages: SmallVec<[DerefSeg; 1]>,
+}
+
+/// A segment of a dereference chain.
+#[derive(Clone, PartialEq)]
+pub struct DerefSeg {
+    /// If true, the deref may fail.
+    pub fallible: bool,
+    
+    /// This segments deref.
+    pub member: CompactString,
+}
 
 
 // ----------------------------------------------------------------------------
@@ -61,12 +83,21 @@ impl std::fmt::Debug for Expression {
         match self {
             Expression::Value(l) => std::fmt::Debug::fmt(l, f),
             Expression::Invoke(c) => write!(f, "({:?})", c),
+            Expression::Deref(d) => {
+                write!(f, "{:?}", d.source)?;
+                for seg in &d.stages {
+                    write!(f, ".")?;
+                    if seg.fallible { write!(f, "?")? }
+                    write!(f, "{}", seg.member)?
+                }
+                Ok(())
+            },
             Expression::Pipe(p) => {
                 write!(f, "({:?}", p.source)?;
                 for seg in &p.stages {
                     write!(f, " |")?;
                     if seg.filter {write!(f, "?")?}
-                    write!(f, " {:?}", seg.invoke)?;
+                    write!(f, " {:?}", seg.invoke)?
                 }
                 write!(f, ")")
             },

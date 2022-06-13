@@ -20,23 +20,41 @@ pub fn parse_expression(
             } => {
                 drop(tokens.next()); // drop the first dot
                 
-                let mut get = Invoke {
-                    name: "get".into(),
-                    pos_args: smallvec![expr],
-                    nom_args: Default::default(),
+                let mut chain = if
+                let Expression::Deref(deref) = expr {
+                    deref
+                } else {
+                    Box::new(DerefChain {
+                        source: expr,
+                        stages: Default::default(),
+                    })
                 };
                 
-                if let Some(Token {
+                let fallible = if let Some(Token {
                     content: TokenContent::Symbol(Symbol::QuestionMark), ..
                 }) = tokens.peek() {
-                    get.name = "get-unwrap".into();
                     drop(tokens.next()); // drop the question-mark
-                }
+                    true
+                } else {
+                    false
+                };
                 
-                let inner = parse_expression(tokens, false)?;
-                get.pos_args.push(inner);
+                let member = match tokens.next() {
+                    Some(Token {
+                        content: TokenContent::Literal(Literal::Str(name)), ..
+                    }) => name,
+                    Some(Token {
+                        content, ..
+                    }) => return Err(ParseError::ExpectButGot("member name".into(), format!("{content:?}").into())),
+                    None => return Err(ParseError::ExpectButEnd("member name")),
+                };
                 
-                expr = Expression::Invoke(get.into());
+                chain.stages.push(DerefSeg {
+                    fallible,
+                    member,
+                });
+                
+                expr = Expression::Deref(chain);
             },
             
             // Range? Parse Range!
