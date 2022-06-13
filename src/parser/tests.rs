@@ -72,8 +72,8 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("$_0123456789_")?;
     chk("@_")?;
     chk("@abcdef")?;
-    chk("@'quoted string'")?;
-    chk("@\"quoted string\"")?;
+    chk("@'quoted \" string'")?;
+    chk("@\"quoted ' string\"")?;
     chk("@67e55044-10b1-426f-9247-bb680e5fe0c8")?;
     //chk("$ $$ $$ $$")?;
     chk("0x[FF 01 02 03 04]")?;

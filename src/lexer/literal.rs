@@ -1,5 +1,7 @@
 //! Literal representation.
 
+use std::borrow::Cow;
+
 use smartstring::alias::CompactString;
 
 /// A literal / value.
@@ -85,7 +87,7 @@ impl std::fmt::Debug for Literal {
             Literal::Int(v) => write!(f, "{v}i"),
             Literal::Dec(v) => write!(f, "{v}f"),
             Literal::Uid(v) => write!(f, "U{v}"),
-            Literal::Str(v) => write!(f, "{v}"),
+            Literal::Str(v) => write!(f, "{}", bareword_format(v)),
             Literal::Byt(v) => {
                 write!(f, "0x[")?;
                 let mut tail = false;
@@ -103,9 +105,37 @@ impl std::fmt::Debug for Literal {
             Literal::RefVar(v) => write!(f, "${v}"),
             Literal::ObjIdx(v) => write!(f, "@{v}"),
             Literal::ObjUid(v) => write!(f, "@{v}"),
-            Literal::ObjKey(v) => write!(f, "@\"{v}\""),
+            Literal::ObjKey(v) => write!(f, "@{}", bareword_format(v)),
         }
     }
+}
+
+/// Format the given string as bareword, if possible.
+pub fn bareword_format(input: &str) -> Cow<str> {
+    for (i, ch) in input.char_indices() {
+        if i == 0 {
+            if is_bareword_start(ch) {
+                continue;
+            }
+        } else if is_bareword_part(ch) {
+            continue;
+        }
+        
+        let mut escaped = String::with_capacity(input.len()+3);
+        escaped.push('"');
+        escaped.push_str(&input[..i]);
+        for ch in input[i..].chars() {
+            if ch == '"' {
+                escaped.push_str("\\\"");
+            } else {
+                escaped.push(ch);
+            }
+        }
+        escaped.push('"');
+        return Cow::Owned(escaped);
+    };
+    
+    Cow::Borrowed(input)
 }
 
 /// Check if the given character indicates the start of a bareword.
