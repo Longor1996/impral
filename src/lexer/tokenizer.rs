@@ -75,7 +75,7 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                 // Parse Object Key Reference
                 if let Some(PosChar { char, .. }) = input.peek().cloned() {
                     // Check for start of bareword...
-                    if char.is_alphabetic() || char == '_' {
+                    if is_bareword_start(char) {
                         input.next(); // drop start
                         let (start, end, bareword)
                             = try_lex_bareword(&mut input, index, char);
@@ -105,7 +105,7 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                 // Parse Local Reference
                 if let Some(PosChar { char, .. }) = input.peek().cloned() {
                     // Check for start of bareword...
-                    if char.is_alphabetic() || char == '_' {
+                    if is_bareword_start(char) {
                         input.next(); // drop start
                         let (start, end, bareword)
                             = try_lex_bareword(&mut input, index, char);
@@ -133,8 +133,7 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         }
         
         // Check for start of bareword...
-        if current.is_alphabetic() || *current == '_' {
-            
+        if is_bareword_start(*current) {
             let (start, end, bareword) = try_lex_bareword(&mut input, index, *current);
             
             return Some((start, end,
@@ -347,7 +346,7 @@ fn try_lex_bareword(input: &mut PosInput, start: usize, current: char) -> (usize
     
     while let Some(PosChar { char: peeked, idx: index , .. }) = input.peek().copied() {
         end = index;
-        if peeked.is_alphanumeric() || peeked == '_' || peeked == '-' {
+        if is_bareword_part(peeked) {
             buffer.push(peeked);
             input.next(); // eat char
             // NOTE: This could be implemented using `input.next_if`.

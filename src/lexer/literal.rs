@@ -107,3 +107,13 @@ impl std::fmt::Debug for Literal {
         }
     }
 }
+
+/// Check if the given character indicates the start of a bareword.
+pub fn is_bareword_start(ch: char) -> bool {
+    ch.is_alphabetic() || ch == '_'
+}
+
+/// Check if the given character may be part of a bareword.
+pub fn is_bareword_part(ch: char) -> bool {
+    ch.is_alphanumeric() || ch == '_' || ch == '-'
+}
