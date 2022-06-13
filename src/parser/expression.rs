@@ -93,35 +93,6 @@ pub fn parse_expression(
     Ok(expr)
 }
 
-/// Consume a symbol.
-pub fn consume_symbol(
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
-    symbol: Symbol,
-) -> bool {
-    match tokens.peek() {
-        Some(Token { content: TokenContent::Symbol(peeked), .. })
-        if *peeked == symbol => {
-            tokens.next();
-            true
-        },
-        _ => false
-    }
-}
-
-/// Match a symbol.
-pub fn match_symbol(
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
-    symbol: Symbol,
-) -> bool {
-    match tokens.peek() {
-        Some(Token { content: TokenContent::Symbol(peeked), .. })
-        if *peeked == symbol => {
-            true
-        },
-        _ => false
-    }
-}
-
 /// Parses a `TokenStream` into a deref chain.
 pub fn parse_deref(
     tokens: &mut PeekableTokenStream<impl TokenStream>,

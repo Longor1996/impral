@@ -8,6 +8,9 @@ use smartstring::alias::CompactString;
 
 use crate::lexer::*;
 
+pub mod helpers;
+pub use helpers::*;
+
 pub mod expression;
 pub use expression::*;
 
