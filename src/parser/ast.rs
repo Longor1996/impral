@@ -83,24 +83,8 @@ impl std::fmt::Debug for Expression {
         match self {
             Expression::Value(l) => std::fmt::Debug::fmt(l, f),
             Expression::Invoke(c) => write!(f, "({:?})", c),
-            Expression::Deref(d) => {
-                write!(f, "{:?}", d.source)?;
-                for seg in &d.stages {
-                    write!(f, ".")?;
-                    if seg.fallible { write!(f, "?")? }
-                    write!(f, "{}", seg.member)?
-                }
-                Ok(())
-            },
-            Expression::Pipe(p) => {
-                write!(f, "({:?}", p.source)?;
-                for seg in &p.stages {
-                    write!(f, " |")?;
-                    if seg.filter {write!(f, "?")?}
-                    write!(f, " {:?}", seg.invoke)?
-                }
-                write!(f, ")")
-            },
+            Expression::Deref(d) => write!(f, "{:?}", d),
+            Expression::Pipe(p) => write!(f, "({:?})", p),
         }
     }
 }
@@ -121,5 +105,29 @@ impl std::fmt::Debug for Invoke {
             write!(f, " {}={:?}", key, arg)?;
         }
         write!(f, "")
+    }
+}
+
+impl std::fmt::Debug for Pipe {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({:?}", self.source)?;
+        for seg in &self.stages {
+            write!(f, " |")?;
+            if seg.filter {write!(f, "?")?}
+            write!(f, " {:?}", seg.invoke)?
+        }
+        write!(f, ")")
+    }
+}
+
+impl std::fmt::Debug for DerefChain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.source)?;
+        for seg in &self.stages {
+            write!(f, ".")?;
+            if seg.fallible { write!(f, "?")? }
+            write!(f, "{}", seg.member)?
+        }
+        Ok(())
     }
 }
