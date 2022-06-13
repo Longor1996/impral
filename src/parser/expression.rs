@@ -14,47 +14,12 @@ pub fn parse_expression(
     
     while let Some(token) = tokens.peek() {
         match token {
-            // Dot? Subset access!
+            // Dot? Dereference!
             Token {
                 content: TokenContent::Symbol(Symbol::Dot), ..
             } => {
-                drop(tokens.next()); // drop the first dot
-                
-                let mut chain = if
-                let Expression::Deref(deref) = expr {
-                    deref
-                } else {
-                    Box::new(DerefChain {
-                        source: expr,
-                        stages: Default::default(),
-                    })
-                };
-                
-                let fallible = if let Some(Token {
-                    content: TokenContent::Symbol(Symbol::QuestionMark), ..
-                }) = tokens.peek() {
-                    drop(tokens.next()); // drop the question-mark
-                    true
-                } else {
-                    false
-                };
-                
-                let member = match tokens.next() {
-                    Some(Token {
-                        content: TokenContent::Literal(Literal::Str(name)), ..
-                    }) => name,
-                    Some(Token {
-                        content, ..
-                    }) => return Err(ParseError::ExpectButGot("member name".into(), format!("{content:?}").into())),
-                    None => return Err(ParseError::ExpectButEnd("member name")),
-                };
-                
-                chain.stages.push(DerefSeg {
-                    fallible,
-                    member,
-                });
-                
-                expr = Expression::Deref(chain);
+                drop(tokens.next()); // drop the dot
+                expr = Expression::Deref(parse_deref(tokens, expr)?);
             },
             
             // Range? Parse Range!
@@ -127,6 +92,48 @@ pub fn parse_expression(
     Ok(expr)
 }
 
+
+/// Parses a `TokenStream` into a deref chain.
+pub fn parse_deref(
+    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    expr: Expression
+) -> Result<Box<DerefChain>, ParseError> {
+    let mut chain = if
+    let Expression::Deref(deref) = expr {
+        deref
+    } else {
+        Box::new(DerefChain {
+            source: expr,
+            stages: Default::default(),
+        })
+    };
+    
+    let fallible = if let Some(Token {
+        content: TokenContent::Symbol(Symbol::QuestionMark), ..
+    }) = tokens.peek() {
+        drop(tokens.next()); // drop the question-mark
+        true
+    } else {
+        false
+    };
+    
+    let member = match tokens.next() {
+        Some(Token {
+            content: TokenContent::Literal(Literal::Str(name)), ..
+        }) => name,
+        Some(Token {
+            content, ..
+        }) => return Err(ParseError::ExpectButGot("member name".into(), format!("{content:?}").into())),
+        None => return Err(ParseError::ExpectButEnd("member name")),
+    };
+    
+    chain.stages.push(DerefSeg {
+        fallible,
+        member,
+    });
+    
+    Ok(chain)
+}
 /// Parses a `TokenStream` into a pipe.
 pub fn parse_pipe(
     tokens: &mut PeekableTokenStream<impl TokenStream>,
