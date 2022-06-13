@@ -74,8 +74,8 @@ fn should_succeed() -> Result<(), ParseError> {
     
     println!();
     println!(": Quoted Strings");
-    chk("\"Hello, World!\"")?;
-    chk("\"Oooops...")?;
+    chk("print \"Hello, World!\"")?;
+    chk("print \"Oooops...")?;
     
     println!();
     println!(": References");
@@ -125,6 +125,7 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("-- 1 2 3")?;
     chk("<= 1 2 3")?;
     chk(">= 1 2 3")?;
+    chk("print hi")?;
     chk("chk $$")?;
     chk("ß ßß")?;
     chk("anything-can-be-an-operator 42")?;

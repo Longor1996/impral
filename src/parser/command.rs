@@ -111,9 +111,7 @@ pub fn parse_command_body(
         }
         
         if consume_symbol(tokens, Symbol::Dash) {
-            if let Some(Token {
-                content: TokenContent::Literal(Literal::Str(s)), ..
-            }) = tokens.next() {
+            if let Some(s) = consume_string(tokens) {
                 cmd.nom_args.insert(s, Expression::Value(Literal::Bool(false)));
                 no_more_pos_args = true;
                 continue;
@@ -123,9 +121,7 @@ pub fn parse_command_body(
         }
         
         if consume_symbol(tokens, Symbol::Plus) {
-            if let Some(Token {
-                content: TokenContent::Literal(Literal::Str(s)), ..
-            }) = tokens.next() {
+            if let Some(s) = consume_string(tokens) {
                 cmd.nom_args.insert(s, Expression::Value(Literal::Bool(true)));
                 no_more_pos_args = true;
                 continue;
@@ -136,9 +132,7 @@ pub fn parse_command_body(
         
         if let Some(token) = tokens.peek().cloned() {
             // Attempt parsing arguments...
-            // BAREWORD=
-            // -BAREWORD
-            // +BAREWORD
+            // BAREWORD=EXPRESSION
             // EXPRESSION
             
             // ...starting with what may just be a expression...
