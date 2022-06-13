@@ -21,7 +21,7 @@ pub fn parse_list(
             }
         }
     
-        let expr = parse_expression(tokens, false)?;
+        let expr = parse_expression(tokens, false, true)?;
         list.push(expr);
     }
 
@@ -63,7 +63,7 @@ pub fn parse_map(
                     return Err(ParseError::Unexpected("token".into()));
                 }
                 
-                let expr = parse_expression(tokens, false)?;
+                let expr = parse_expression(tokens, false, true)?;
                 map.insert(key, expr);
             },
             TokenContent::Literal(l) => return Err(ParseError::Unexpected(format!("literal {:?}", l).into())),

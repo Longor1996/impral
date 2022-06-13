@@ -7,10 +7,11 @@ use super::*;
 /// Parses a `TokenStream` into an AST.
 pub fn parse_expression(
     tokens: &mut PeekableTokenStream<impl TokenStream>,
-    first: bool
+    start_cmd: bool,
+    start_pipe: bool
 ) -> Result<Expression, ParseError> {
     // Try to parse an expression item...
-    let mut expr = parse_item(tokens, first)?;
+    let mut expr = parse_item(tokens, start_cmd)?;
     
     while let Some(token) = tokens.peek() {
         match token {
@@ -34,7 +35,7 @@ pub fn parse_expression(
                     nom_args: Default::default(),
                 };
                 
-                let inner = parse_expression(tokens, false)?;
+                let inner = parse_expression(tokens, false, false)?;
                 range.pos_args.push(inner);
                 
                 expr = Expression::Invoke(range.into());
@@ -57,7 +58,7 @@ pub fn parse_expression(
                 content: TokenContent::Symbol(Symbol::Tilde), ..
             } => {
                 drop(tokens.next()); // drop the tilde
-                let to = parse_expression(tokens, false)?;
+                let to = parse_expression(tokens, false, false)?;
                 expr = Expression::Invoke(Invoke {
                     name: "relative".into(),
                     pos_args: smallvec![expr, to],
@@ -80,8 +81,8 @@ pub fn parse_expression(
             // Pipe? Pipe!
             Token {
                 content: TokenContent::Symbol(Symbol::Pipe), ..
-            }  if first => {
-                expr = Expression::Pipe(parse_pipe(tokens, expr)?.into());
+            }  if start_pipe => {
+                expr = Expression::Pipe(parse_pipe(tokens, expr)?);
             },
             
             // Ignore everything else...
@@ -134,14 +135,20 @@ pub fn parse_deref(
     
     Ok(chain)
 }
+
 /// Parses a `TokenStream` into a pipe.
 pub fn parse_pipe(
     tokens: &mut PeekableTokenStream<impl TokenStream>,
-    source: Expression
-) -> Result<Pipe, ParseError> {
-    let mut pipe = Pipe {
-        source,
-        stages: vec![],
+    expr: Expression
+) -> Result<Box<Pipe>, ParseError> {
+    let mut pipe = if
+    let Expression::Pipe(pipe) = expr {
+        pipe
+    } else {
+        Box::new(Pipe {
+            source: expr,
+            stages: Default::default(),
+        })
     };
     
     while let Some(Token {
@@ -152,13 +159,10 @@ pub fn parse_pipe(
         let filter = matches!(tokens.peek(), Some(Token {content: TokenContent::Symbol(Symbol::QuestionMark),..}));
         if filter {drop(tokens.next())}
         
-        let invoke = parse_expression(tokens, true)?;
-        
-        let seg = PipeSeg {
+        pipe.stages.push(PipeSeg {
             filter,
-            invoke,
-        };
-        pipe.stages.push(seg);
+            invoke: parse_expression(tokens, true, false)?,
+        });
     }
     
     Ok(pipe)
@@ -167,7 +171,7 @@ pub fn parse_pipe(
 /// Parses a `TokenStream` into an item (piece of an expression).
 pub fn parse_item(
     tokens: &mut PeekableTokenStream<impl TokenStream>,
-    first: bool
+    start_cmd: bool
 ) -> Result<Expression, ParseError> {
     // Fetch the next token...
     let token = match tokens.next() {
@@ -185,7 +189,7 @@ pub fn parse_item(
     };
     
     // Is it a command?
-    if first {
+    if start_cmd {
         if let Ok(command_name) = try_into_command_name(&token) {
             return parse_command_body(command_name, tokens, None).map(|i|i.into())
         }
@@ -201,6 +205,7 @@ pub fn parse_item(
         return Ok(match kind {
             Symbol::ParenLeft => parse_expression(
                 &mut subtokens.into_iter().peekmore(),
+                true,
                 true
             )?,
             

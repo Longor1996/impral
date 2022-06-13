@@ -168,7 +168,7 @@ pub fn parse_command_body(
                 }
                 
                 // ...starting with what may just be a expression...
-                let expr = parse_expression(tokens, false)?;
+                let expr = parse_expression(tokens, false, false)?;
                 
                 if let Some(Token {
                     content: TokenContent::Symbol(Symbol::EqualSign), ..
@@ -186,7 +186,7 @@ pub fn parse_command_body(
                     drop(tokens.next());
                     
                     // parse value
-                    let rexpr = parse_expression(tokens, false)?;
+                    let rexpr = parse_expression(tokens, false, false)?;
                     
                     cmd.nom_args.insert(lexpr, rexpr);
                     no_more_pos_args = true;

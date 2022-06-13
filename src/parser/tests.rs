@@ -5,7 +5,12 @@ use super::*;
 fn chk(input: &str) -> Result<(), ParseError> {
     let mut stream = tokenize(input);
     let mut stream = groupenize(&mut stream, None);
-    let output = parse_expression(&mut stream, true);
+    
+    let output = parse_expression(
+        &mut stream,
+        true,
+        true
+    );
     
     let output = match output {
         Ok(o) => o,
@@ -125,6 +130,7 @@ fn should_succeed() -> Result<(), ParseError> {
     println!(": Pipes");
     chk("testA 1 2 3 | testB 4 5 6 | testC 7 8 9")?;
     chk("maybe-null |? accepts-null")?;
+    chk("outer | v1 | (inner v2 | v3) | v4")?;
     
     println!(": Execution Modifiers");
     chk("conditional && execution")?;
