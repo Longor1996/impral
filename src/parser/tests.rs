@@ -156,6 +156,19 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("print 123[1][2][3][4][5]")?;
     
     println!();
+    println!(": Range");
+    chk("0..1")?;
+    chk("0..10")?;
+    chk("0.5..PI")?;
+    chk("print test..10")?;
+    chk("print test..test")?;
+    chk("0..=1")?;
+    chk("0..=10")?;
+    chk("0.5..=PI")?;
+    chk("print test..=10")?;
+    chk("print test..=test")?;
+    
+    println!();
     println!(": Try");
     chk("test fallible?")?;
     chk("test fallible?!")?;

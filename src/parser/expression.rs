@@ -41,16 +41,18 @@ pub fn parse_expression(
         
         // Range? Parse Range!
         if consume_symbol(tokens, Symbol::Range) {
-            let mut range = Invoke {
-                name: "range".into(),
-                pos_args: smallvec![expr],
-                nom_args: Default::default(),
-            };
+            if let Expression::Range(_, _, _) = expr {
+                return Err(ParseError::ExpectButGot("a start that is not a range".into(), "a start that is a range".into()))
+            }
             
-            let inner = parse_expression(tokens, false, false)?;
-            range.pos_args.push(inner);
+            let inclusive = consume_symbol(tokens, Symbol::EqualSign);
+            let end = parse_expression(tokens, false, false)?;
             
-            expr = Expression::Invoke(range.into());
+            if let Expression::Range(_, _, _) = end {
+                return Err(ParseError::ExpectButGot("an end that is not a range".into(), "an end that is a range".into()))
+            }
+            
+            expr = Expression::Range(Box::new(expr), Box::new(end), inclusive);
             continue;
         }
         

@@ -14,6 +14,9 @@ pub enum Expression {
     /// A command.
     Invoke(Box<Invoke>),
     
+    /// A range from START to END, maybe INCLUSIVE.
+    Range(Box<Expression>, Box<Expression>, bool),
+    
     /// A field access on the left expression.
     Field(Box<Expression>, CompactString),
     
@@ -77,6 +80,11 @@ impl std::fmt::Debug for Expression {
             Expression::Invoke(c) => write!(f, "({:?})", c),
             Expression::Field(e, i) => write!(f, "{e:?}.{}", bareword_format(i)),
             Expression::Index(e, i) => write!(f, "{e:?}[{i:?}]"),
+            Expression::Range(s, e, inc) => if *inc {
+                write!(f, "{s:?}..={e:?}")
+            } else {
+                write!(f, "{s:?}..{e:?}")
+            },
             Expression::Try(e, t) => if *t {
                 write!(f, "{e:?}?!")
             } else {
