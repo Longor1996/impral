@@ -115,13 +115,13 @@ fn should_succeed() -> Result<(), ParseError> {
     
     println!();
     println!(": Operators");
-    chk("= 1 2 3")?;
     chk("+ 1 2 3")?;
     chk("- 1 2 3")?;
     chk("* 1 2 3")?;
     chk("/ 1 2 3")?;
     chk("++ 1 2 3")?;
     chk("-- 1 2 3")?;
+    chk("== 1 2 3")?;
     chk("<= 1 2 3")?;
     chk(">= 1 2 3")?;
     chk("print hi")?;

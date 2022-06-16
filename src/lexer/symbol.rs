@@ -127,6 +127,10 @@ pub enum Symbol {
     #[strum(to_string="..")]
     Range,
     
+    /// `==`
+    #[strum(to_string="==")]
+    EqEq,
+    
     /// `<=`
     #[strum(to_string="<=")]
     EqLess,
@@ -164,7 +168,7 @@ impl Symbol {
     /// Is the symbol a operator?
     pub fn is_operator(&self) -> bool {
         matches!(self
-            , Self::EqualSign
+            , Self::EqEq
             | Self::EqGreater
             | Self::EqLess
             | Self::AngleLeft

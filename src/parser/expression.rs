@@ -10,6 +10,12 @@ pub fn parse_expression(
     start_cmd: bool,
     start_pipe: bool
 ) -> Result<Expression, ParseError> {
+    
+    if consume_symbol(tokens, Symbol::EqualSign) {
+        // TODO: Infix expression parsing mode?
+        return Err(ParseError::Unexpected("reserved symbol".into()))
+    }
+    
     // Try to parse an expression item...
     let mut expr = parse_item(tokens, start_cmd)?;
     
