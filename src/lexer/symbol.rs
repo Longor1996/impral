@@ -188,15 +188,20 @@ impl Symbol {
     
     /// Is the symbol a delimiter?
     pub fn is_delimiter(&self) -> bool {
+        self.is_start_delimiter() || self.is_end_delimiter()
+    }
+    
+    /// Is the symbol a delimiter start?
+    pub fn is_start_delimiter(&self) -> bool {
         matches!(self
-            , Self::ParenLeft | Self::ParenRight
-            | Self::BraketLeft | Self::BraketRight
-            | Self::CurlyLeft | Self::CurlyRight
-            | Self::AngleLeft | Self::AngleRight
+            , Self::ParenLeft
+            | Self::BraketLeft
+            | Self::CurlyLeft
+            | Self::AngleLeft
         )
     }
     
-    /// Is the symbol a delimiter?
+    /// Is the symbol a delimiter end?
     pub fn is_end_delimiter(&self) -> bool {
         matches!(self
             , Self::ParenRight
