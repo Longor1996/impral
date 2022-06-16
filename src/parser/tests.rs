@@ -70,7 +70,6 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("12345")?;
     chk("3.141")?;
     chk("180°")?;
-    chk("180.foobar")?;
     
     println!();
     println!(": Quoted Strings");
@@ -129,6 +128,29 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("chk $$")?;
     chk("ß ßß")?;
     chk("anything-can-be-an-operator 42")?;
+    
+    println!();
+    println!(": Field Access");
+    chk("print foo.bar")?;
+    //chk("print foo.123")?;
+    chk("print $.bar")?;
+    chk("print $$.bar")?;
+    chk("print 123.bar")?;
+    chk("print 45°.bar")?;
+    chk("print (f).bar")?;
+    
+    println!();
+    println!(": Index Access");
+    chk("print foo[bar]")?;
+    chk("print foo[123]")?;
+    chk("print $[bar]")?;
+    chk("print $$[bar]")?;
+    chk("print 123[bar]")?;
+    chk("print 45°[bar]")?;
+    chk("print (f)[bar]")?;
+    chk("print [foo foo foo][bar]")?;
+    chk("print foo[1][2][3][4][5]")?;
+    chk("print 123[1][2][3][4][5]")?;
     
     println!();
     println!(": Parameters");

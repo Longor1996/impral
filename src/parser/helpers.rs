@@ -42,6 +42,29 @@ pub fn consume_string(
     None
 }
 
+/// Consume group...
+pub fn consume_group(
+    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    symbol: Symbol,
+) -> Option<PeekableTokenStream<impl TokenStream>> {
+    if let Some(Token {
+        content: TokenContent::Group(peeked, _), ..
+    }) = tokens.peek() {
+        if symbol != *peeked {
+            return None;
+        }
+        
+        if let TokenContent::Group(_delim, tokens)
+            = tokens.next().unwrap().content
+        {
+            use peekmore::PeekMore;
+            return Some(tokens.into_iter().peekmore())
+        }
+    };
+    
+    None
+}
+
 /// Match a symbol.
 pub fn match_symbol(
     tokens: &mut PeekableTokenStream<impl TokenStream>,

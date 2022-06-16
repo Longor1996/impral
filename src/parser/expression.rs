@@ -15,9 +15,27 @@ pub fn parse_expression(
     
     // Postfix operator parsing...
     loop {
-        // Dot? Dereference!
+        // Braket? Index!
+        if let Some(mut tokens) = consume_group(tokens, Symbol::BraketLeft) {
+            let index = parse_expression(&mut tokens, true, true)?;
+            
+            if tokens.peek().is_some() {
+                return Err(ParseError::ExpectButGot("end of expression".into(), "more tokens".into()))
+            }
+            
+            expr = Expression::Index(Box::new(expr), Box::new(index));
+            continue;
+        }
+        
+        // Dot? Field!
         if consume_symbol(tokens, Symbol::Dot) {
-            expr = Expression::Deref(parse_deref(tokens, expr)?);
+            let member = if let Some(name) = consume_string(tokens) {
+                name
+            } else {
+                return Err(ParseError::ExpectButGot("member name".into(), "something else".into()))
+            };
+            
+            expr = Expression::Field(Box::new(expr), member);
             continue;
         }
         
@@ -77,37 +95,6 @@ pub fn parse_expression(
     }
     
     Ok(expr)
-}
-
-/// Parses a `TokenStream` into a deref chain.
-pub fn parse_deref(
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
-    expr: Expression
-) -> Result<Box<DerefChain>, ParseError> {
-    let mut chain = if
-    let Expression::Deref(deref) = expr {
-        deref
-    } else {
-        Box::new(DerefChain {
-            source: expr,
-            stages: Default::default(),
-        })
-    };
-    
-    let fallible = consume_symbol(tokens, Symbol::QuestionMark);
-    
-    let member = if let Some(name) = consume_string(tokens) {
-        name
-    } else {
-        return Err(ParseError::ExpectButGot("member name".into(), "something else".into()))
-    };
-    
-    chain.stages.push(DerefSeg {
-        fallible,
-        member,
-    });
-    
-    Ok(chain)
 }
 
 /// Parses a `TokenStream` into a pipe.
