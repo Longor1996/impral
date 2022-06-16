@@ -5,6 +5,9 @@ use super::*;
 /// A expression node.
 #[derive(Clone, PartialEq)]
 pub enum Expression {
+    /// Nothing.
+    Empty,
+    
     /// A value: A lone piece of data.
     Value(Literal),
     
@@ -66,6 +69,7 @@ pub struct PipeSeg {
 impl std::fmt::Debug for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Expression::Empty => write!(f, "_"),
             Expression::Value(l) => std::fmt::Debug::fmt(l, f),
             Expression::Invoke(c) => write!(f, "({:?})", c),
             Expression::Field(e, i) => write!(f, "{e:?}.{}", bareword_format(i)),

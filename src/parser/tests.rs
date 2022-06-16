@@ -131,6 +131,7 @@ fn should_succeed() -> Result<(), ParseError> {
     
     println!();
     println!(": Field Access");
+    chk("print _.bar")?;
     chk("print foo.bar")?;
     //chk("print foo.123")?;
     chk("print $.bar")?;
@@ -141,8 +142,10 @@ fn should_succeed() -> Result<(), ParseError> {
     
     println!();
     println!(": Index Access");
+    chk("print _[bar]")?;
     chk("print foo[bar]")?;
     chk("print foo[123]")?;
+    chk("print foo[_]")?;
     chk("print $[bar]")?;
     chk("print $$[bar]")?;
     chk("print 123[bar]")?;

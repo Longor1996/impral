@@ -156,6 +156,13 @@ pub fn parse_item(
         }
     }
     
+    // Is it a underscore?
+    
+    // Underscore? Return an empty!
+    if let TokenContent::Symbol(Symbol::Underscore) = token.content {
+        return Ok(Expression::Empty)
+    }
+    
     // Literal? Pass thru directly!
     if let TokenContent::Literal(l) = token.content {
         return Ok(Expression::Value(l))
