@@ -20,6 +20,9 @@ pub enum Expression {
     /// A index access on the left expression.
     Index(Box<Expression>, Box<Expression>),
     
+    /// Unwrap the result; throwing on error if bool is `true`.
+    Try(Box<Expression>, bool),
+    
     /// A pipe.
     Pipe(Box<Pipe>),
 }
@@ -74,6 +77,11 @@ impl std::fmt::Debug for Expression {
             Expression::Invoke(c) => write!(f, "({:?})", c),
             Expression::Field(e, i) => write!(f, "{e:?}.{}", bareword_format(i)),
             Expression::Index(e, i) => write!(f, "{e:?}[{i:?}]"),
+            Expression::Try(e, t) => if *t {
+                write!(f, "{e:?}?!")
+            } else {
+                write!(f, "{e:?}?")
+            },
             Expression::Pipe(p) => write!(f, "{:?}", p),
         }
     }

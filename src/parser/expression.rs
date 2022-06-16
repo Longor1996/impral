@@ -54,13 +54,10 @@ pub fn parse_expression(
             continue;
         }
         
-        // QuestionMark? Existence check!
+        // QuestionMark? Try unwrapping!
         if consume_symbol(tokens, Symbol::QuestionMark) {
-            expr = Expression::Invoke(Invoke {
-                name: "exists".into(),
-                pos_args: smallvec![expr],
-                nom_args: Default::default(),
-            }.into());
+            let throw = consume_symbol(tokens, Symbol::ExclamationMark);
+            expr = Expression::Try(Box::new(expr), throw);
             continue;
         }
         
