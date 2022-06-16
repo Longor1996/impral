@@ -115,6 +115,7 @@ fn should_succeed() -> Result<(), ParseError> {
     
     println!();
     println!(": Operators");
+    chk("print hello")?;
     chk("+ 1 2 3")?;
     chk("- 1 2 3")?;
     chk("* 1 2 3")?;
@@ -124,8 +125,6 @@ fn should_succeed() -> Result<(), ParseError> {
     chk("== 1 2 3")?;
     chk("<= 1 2 3")?;
     chk(">= 1 2 3")?;
-    chk("print hi")?;
-    chk("chk $$")?;
     chk("ß ßß")?;
     chk("anything-can-be-an-operator 42")?;
     
@@ -191,6 +190,7 @@ fn should_succeed() -> Result<(), ParseError> {
     
     println!();
     println!(": Pipes");
+    chk("0..10 | print $")?;
     chk("testA 1 2 3 | testB 4 5 6 | testC 7 8 9")?;
     chk("maybe-null |? accepts-null")?;
     chk("outer | v1 | (inner v2 | v3) | v4")?;

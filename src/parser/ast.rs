@@ -5,28 +5,28 @@ use super::*;
 /// A expression node.
 #[derive(Clone, PartialEq)]
 pub enum Expression {
-    /// Nothing.
+    /// Nothing; an empty slot.
     Empty,
     
-    /// A value: A lone piece of data.
+    /// A value.
     Value(Literal),
     
-    /// A command.
+    /// A function call / command invocation.
     Invoke(Box<Invoke>),
     
     /// A range from START to END, maybe INCLUSIVE.
     Range(Box<Expression>, Box<Expression>, bool),
     
-    /// A field access on the left expression.
+    /// A field/member access on the left expression.
     Field(Box<Expression>, CompactString),
     
-    /// A index access on the left expression.
+    /// A index/array access on the left expression.
     Index(Box<Expression>, Box<Expression>),
     
-    /// Unwrap the result; throwing on error if bool is `true`.
+    /// Unwrap the left expression; throwing an error if bool is `true`.
     Try(Box<Expression>, bool),
     
-    /// A pipe.
+    /// A pipe / generator / iterator.
     Pipe(Box<Pipe>),
 }
 
