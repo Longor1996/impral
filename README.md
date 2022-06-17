@@ -1,8 +1,10 @@
 # IMPRAL
 
-IMPRAL is a command parsing and evaluation library for a LISP dialect, intended for reasonably ergonomic and specialized commandline input within larger applications and frameworks.
+IMPRAL is a command parsing and evaluation library for a LISP-ish dialect, intended for reasonably ergonomic and specialized commandline input *within* larger applications, games and frameworks.
 
-**DISCLAIMER:** Currently incomplete/still in development. *Do not use.*
+> **NOTICE:**  
+> Currently incomplete/still in development. Expect breaking changes.  
+> *Do not use in production code.*
 
 ## Introduction
 
@@ -14,29 +16,50 @@ A very quick overview:
 - Mostly safe ~~and panic-free~~ parser.
 - Conversion to an AST happens only once.
 - A small-ish set of literal types...
-  - `Null`
-  - Booleans
+  - `_`
+  - `null`
+  - Booleans (`true` / `false`)
   - Characters
   - Integers and floats (both 64-bit)
     - Integer radixes: `0b…`, `0o…`, `0d…`, `0x…`
   - Strings (compact at & below 24 bytes)
     - Including barewords!
   - ~~Byte-Arrays~~
+  - [UUID's](https://lib.rs/crates/uuid), prefixed with `U`.
 - Data structures:
   - Lists (eg: `[ 1, 2, 3 ]`, commas optional)
   - Dicts (eg: `{ a=1, b=2, c=3 }`, commas optional)
   - Radixed number lists (`0x[C0 +FF -EE]`)
 - References!
-  - Local references: `$my-ref`
-  - Global references: `@my-ref`
   - Result reference: `$`
   - Context reference: `$$`
+  - Local references: `$my-ref`
+  - Global references: `@my-ref`
+  - `A && B`: `B` only runs if `A` succeeds.
+  - `A || B`: `B` only runs if `A` fails.
+- Operators!
+  - Arithmetic (`+ - * / **`)
+  - Equality (`== != < > <= >=`)
+  - Misc (`? ! ~ ^ ++ --`)
+- Fields and indices!
+  - Any item followed by a dot and a name is a field access: `_.name`
+  - Any item followed by a bracketed expression is a index access: `_[index]`
+- Ranges!
+  - Any two expressions, that are not themselves ranges, separated by two dots.
+  - Optional 'last-inclusive' flag can be set by adding a `=` after the dots.
+  - ie: `_ .. _` and `_ ..= _`
 - Pipes!
-  - First command is the *source*
-  - Commands separated by `|`
+  - First expression is the *source*
+  - Expressions separated by `|`
   - Filters: `… |? bar | …`
-- Subcommands! (enclosed by `(…)`)
-- Arbitrary member access (`foo.bar`)
+  - Chaining! `… | … |? … | …`
+- Fallible operations!
+  - Any expression followed by `?` gets unwrapped to the default value.
+  - Any expression followed by `?!` will throw an error.
+- Positional parameters: `foo _ _`
+- Named parameters: `foo bar=_ baz=_`
+- Subexpressions, enclosed by `(…)`
+- ...and other small things!
 
 ## Syntax & Semantics
 
@@ -93,14 +116,15 @@ So, a command consists of three (and a half) parts:
 3. **The named arguments.**  
 	A whitespace separated list of `key=value`-pairs; the keys are *always* barewords.  
 	Named arguments are *required* to be written *after* the positional arguments.  
-	The only exception to this are continuation commands in the last position.
-  One may also write flag-arguments, consisting of a `+` or `-` and a bareword as name.
+	The only exception to this are continuation commands in the last position.  
+  One may also write bool-arguments, consisting of a `+` or `-` and a bareword as name.
 
 4. **Continuation command.** (*optional*)  
 	Another command that is an extra positional parameter in the last position, written after a `:`.
 
 5. **Command Delimiter.** (*optional*)  
-	If the parser encounters a `;`, it will stop parsing, regardless of what comes after the semicolon.
+	If the parser encounters a `;`, it will stop parsing the current command,
+  regardless of what comes after the semicolon; useful for sequences?
 
 To sum this up:
 
@@ -109,9 +133,9 @@ To sum this up:
 - Flag parameters:      `symbol … +kvarg -kvarg …`
 - With continuation:    `symbol … …: command`
 
-### Subcommands
+### Subexpressions
 
-Commands can be enclosed in parentheses and be used as arguments for other commands:  `(symbol …)`
+Expressions can be enclosed in parentheses, to be used within other expressions and as arguments for other commands:  `(…)`
 
 ### Logical Operators
 
@@ -123,30 +147,28 @@ Both of the logical operators may be chained; evaluation will occur from left to
 
 ### Command Pipes
 
-A sequence of commands can be written as a `pipe`, in which every command passes it's result (`$`) to the next command: `players | where $.health less 50 | heal $`
+A sequence of expressions can be written as a `pipe`, in which each stage passes it's result (`$`) to the next one: `players |? < $.health 50 | heal $`
 
-If a command returns an iterator, the iterator's items will be passed thru the pipe, instead of the iterator itself.
+If a stage returns something iterable, that iterator will be evaluated
+and it's items be passed thru the pipe, instead of the iterator itself.
 
-### Indexing
+### Field- and Index-Access
 
-By using the `.`/`.?`-syntax, members of values may be accessed.
+By using the `_.FIELD`- and `_[INDEX]`-syntax, subvalues may be accessed.
 
 ### Ranges
 
-By typing two consecutive dots (`..`), a range between/of two expressions can be created.
+By typing two consecutive dots (`..` and `..=` for right-inclusive), a range between/of two expressions can be created.
 
-### Exists?
+### Fallibility
 
-By using the `?` postfix-operator, one can test if the given value is `null`.
+By using the `?` postfix-operator, one can convert the given value into a default value, if it's `null` or an error. Adding an exclamation mark (`?!`) makes the expression throw an error.
 
-### Relation
-
-> TODO: Specifiy how the relation/relative-to operator should work.
+---
 
 ## TODO
 
-- [ ] Pratt Parsing: https://lib.rs/crates/pratt
-- [ ] Units?
-- [ ] Iterators?
-- [ ] Validation?
-- [ ] Interpreter?
+- [ ] Pratt Parsing with `= …`: https://lib.rs/crates/pratt
+- [ ] Numbers with Units
+- [ ] Validation
+- [ ] Interpreter
