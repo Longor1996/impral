@@ -2,34 +2,6 @@
 
 use super::*;
 
-fn chk(input: &str) -> Result<(), ParseError> {
-    let mut stream = tokenize(input);
-    let mut stream = groupenize(&mut stream, None);
-    
-    let output = parse_expression(
-        &mut stream,
-        true,
-        true
-    );
-    
-    let output = match output {
-        Ok(o) => o,
-        Err(err) => {
-            println!("Failed to parse: {input}");
-            println!("Because: {err}");
-            println!("Tokens: {:?}", groupenize(&mut tokenize(input), None).collect::<Vec<_>>());
-            
-            if let Some(token) = stream.peek() {
-                println!("Next token: {token}");
-            }
-            
-            return Err(err);
-        },
-    };
-    eprintln!("INPUT:  {},\t PARSED:  {:?}", input, output);
-    Ok(())
-}
-
 #[test]
 fn sizes() {
     use std::mem::size_of;
@@ -248,4 +220,35 @@ fn should_succeed() -> Result<(), ParseError> {
 #[should_panic]
 fn posarg_after_nomarg() {
     chk("test 1 a=2 3 b=4").expect("positional arguments cannot be written after nominal arguments");
+}
+
+fn chk(input: &str) -> Result<Expression, ParseError> {
+    let mut stream = tokenize(input);
+    let mut stream = groupenize(&mut stream, None);
+    
+    let output = parse_expression(
+        &mut stream,
+        true,
+        true
+    );
+    
+    let output = match output {
+        Ok(o) => o,
+        Err(err) => {
+            println!("Failed to parse: {input}");
+            println!("Because: {err}");
+            println!("Tokens: {:?}", groupenize(&mut tokenize(input), None).collect::<Vec<_>>());
+            
+            if let Some(token) = stream.peek() {
+                println!("Next token: {token}");
+            }
+            
+            return Err(err);
+        },
+    };
+    
+    eprintln!("INPUT:  {},\t PARSED:  {:?}", input, output);
+    //eprintln!("<div><code>{}</code><br>{}</div>", input, output.to_html());
+    
+    Ok(output)
 }
