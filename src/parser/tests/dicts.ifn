@@ -1,0 +1,11 @@
+{"foo"=_, "bar"=_, "baz"=_}
+{'foo'=_, 'bar'=_, 'baz'=_}
+{foo=_, bar=_, baz=_}
+{foo=_, bar=_, baz=_,}
+{foo=_  bar=_  baz=_}
+{foo=_  bar=_, baz=_}
+{foo=_, bar=_, baz=_}
+{foo=_, bar=_  baz=_,}
+{foo=_, bar=_, baz={foo=_, bar=_, baz=_}}
+{foo={foo=_, bar=_, baz=_}, bar=_, baz={foo=_, bar=_, baz=_}}
+{foo={foo=_, bar=_, baz=_}, bar={foo=_, bar=_, baz=_}, baz={foo=_, bar=_, baz=_}}

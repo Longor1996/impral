@@ -1,0 +1,10 @@
+print fallible
+print fallible?
+print fallible?!
+print fallible.foo?
+print fallible.foo?!
+print fallible[foo]?
+print fallible[foo]?!
+print (fallible)?
+print (fallible)?!
+print _ | _? | _?! |? _ |? _? |? _?!

@@ -1,0 +1,11 @@
+print _ _ _
+print _ _ _ foo=_ bar=_ baz=_
+print foo=_ bar=_ baz=_
+print +foo +bar -baz
+print _ +foo +bar -baz
+print: print _
+print _: print _
+print _ foo=_: print _
+print _: print _: print
+print _ foo=_: print _: print
+print foo=_ bar=_ baz=_: print _

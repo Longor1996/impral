@@ -1,0 +1,32 @@
+print | print
+print | print | print
+print | print | print | print
+print |? print
+print |? print | print
+print |? print |? print
+print | print |? print
+
+print _ | print _
+print _ | print _ | print _
+print _ | print _ | print _ | print _
+print _ |? print _
+print _ |? print _ | print _
+print _ |? print _ |? print _
+print _ | print _ |? print _
+
+print _? |? _
+print _? |? _?
+print _?! |? _?
+print _?! |? _?!
+
+print | (print | print)
+print | (print | print) | (print | print | print)
+
+_ | print
+$ | print
+$$ | print
+$_ | print
+0 | print
+NaN | print
+0..10 | print
+0..=9 | print

@@ -21,198 +21,151 @@ fn sizes() {
     assert!(dbg!(size_of::<Invoke>() <= 128), "The size of an Invoke-struct should be below 128 bytes.");
 }
 
+const SRC_CONSTANTS: &str = include_str!("./tests/constants.ifn");
+const SRC_DICTS: &str = include_str!("./tests/dicts.ifn");
+const SRC_EXAMPLES: &str = include_str!("./tests/examples.ifn");
+const SRC_FIELD: &str = include_str!("./tests/field.ifn");
+const SRC_IFS: &str = include_str!("./tests/ifs.ifn");
+const SRC_INDEX: &str = include_str!("./tests/index.ifn");
+const SRC_LISTS: &str = include_str!("./tests/lists.ifn");
+const SRC_NUMARS: &str = include_str!("./tests/numars.ifn");
+const SRC_NUMBERS: &str = include_str!("./tests/numbers.ifn");
+const SRC_OBJ_REFS: &str = include_str!("./tests/obj-refs.ifn");
+const SRC_OPERATORS: &str = include_str!("./tests/operators.ifn");
+const SRC_PARAMS: &str = include_str!("./tests/params.ifn");
+const SRC_PIPES: &str = include_str!("./tests/pipes.ifn");
+const SRC_RANGE: &str = include_str!("./tests/range.ifn");
+const SRC_REFS: &str = include_str!("./tests/refs.ifn");
+const SRC_STRINGS: &str = include_str!("./tests/strings.ifn");
+const SRC_TRY: &str = include_str!("./tests/try.ifn");
+
+const SRC: &[&str] = &[
+    SRC_CONSTANTS,
+    SRC_NUMBERS,
+    SRC_STRINGS,
+    SRC_REFS,
+    SRC_OBJ_REFS,
+    SRC_NUMARS,
+    SRC_LISTS,
+    SRC_DICTS,
+    SRC_OPERATORS,
+    SRC_FIELD,
+    SRC_INDEX,
+    SRC_RANGE,
+    SRC_TRY,
+    SRC_PARAMS,
+    SRC_PIPES,
+    SRC_IFS,
+    SRC_EXAMPLES,
+];
+
 #[test]
-fn should_succeed() -> Result<(), ParseError> {
-    println!(": Constants");
-    chk("null")?;
-    chk("true")?;
-    chk("false")?;
-    chk("NaN")?;
-    chk("inf")?;
-    chk("infinity")?;
-    chk("+infinity")?;
-    chk("-infinity")?;
-    chk("PI")?;
-    chk("TAU")?;
-    chk("EULER")?;
-    chk("SQRT2")?;
-    
-    println!();
-    println!(": Numbers");
-    chk("12345")?;
-    chk("3.141")?;
-    chk("180°")?;
-    
-    println!();
-    println!(": Quoted Strings");
-    chk("print \"Hello, World!\"")?;
-    chk("print \"Oooops...")?;
-    
-    println!();
-    println!(": References");
-    chk("$")?;
-    chk("$$")?;
-    chk("$_")?;
-    chk("$n")?;
-    chk("$abcdef")?;
-    chk("$_0123456789_")?;
-    
-    println!();
-    println!(": Object References");
-    chk("@_")?;
-    chk("@abcdef")?;
-    chk("@'quoted \" string'")?;
-    chk("@\"quoted ' string\"")?;
-    chk("@67e55044-10b1-426f-9247-bb680e5fe0c8")?;
-    //chk("$ $$ $$ $$")?;
-    
-    println!();
-    println!(": Numeric Arrays");
-    chk("0x[FF 01 02 03 04]")?;
-    chk("0d[-1 +1 -1 +1 -1]")?;
-    
-    println!();
-    println!(": List Structures");
-    chk("[1, 2, 3, 4, 5,]")?;
-    chk("[1  2  3  4  5 ]")?;
-    chk("[foo bar baz]")?;
-    chk("[foo bar [foo bar baz]]")?;
-    chk("[foo bar [foo bar [foo bar baz]]]")?;
-    
-    println!();
-    println!(": Dict Structures");
-    chk("{a=1, b=2, c=-3,}")?;
-    chk("{a=1  b=2  c=-3 }")?;
-    chk("{a=null b={a=1, b=2, c=-3,} c={a=1 b=2 c=-3}}")?;
-    
-    println!();
-    println!(": Operators");
-    chk("print hello")?;
-    chk("+ 1 2 3")?;
-    chk("- 1 2 3")?;
-    chk("* 1 2 3")?;
-    chk("/ 1 2 3")?;
-    chk("++ 1 2 3")?;
-    chk("-- 1 2 3")?;
-    chk("== 1 2 3")?;
-    chk("<= 1 2 3")?;
-    chk(">= 1 2 3")?;
-    chk("ß ßß")?;
-    chk("anything-can-be-an-operator 42")?;
-    
-    println!();
-    println!(": Field Access");
-    chk("print _.bar")?;
-    chk("print foo.bar")?;
-    //chk("print foo.123")?;
-    chk("print $.bar")?;
-    chk("print $$.bar")?;
-    chk("print 123.bar")?;
-    chk("print 45°.bar")?;
-    chk("print (f).bar")?;
-    
-    println!();
-    println!(": Index Access");
-    chk("print _[bar]")?;
-    chk("print foo[bar]")?;
-    chk("print foo[123]")?;
-    chk("print foo[_]")?;
-    chk("print $[bar]")?;
-    chk("print $$[bar]")?;
-    chk("print 123[bar]")?;
-    chk("print 45°[bar]")?;
-    chk("print (f)[bar]")?;
-    chk("print [foo foo foo][bar]")?;
-    chk("print foo[1][2][3][4][5]")?;
-    chk("print 123[1][2][3][4][5]")?;
-    
-    println!();
-    println!(": Range");
-    chk("0..1")?;
-    chk("0..10")?;
-    chk("0.5..PI")?;
-    chk("print test..10")?;
-    chk("print test..test")?;
-    chk("0..=1")?;
-    chk("0..=10")?;
-    chk("0.5..=PI")?;
-    chk("print test..=10")?;
-    chk("print test..=test")?;
-    
-    println!();
-    println!(": Try");
-    chk("test fallible?")?;
-    chk("test fallible?!")?;
-    chk("test fallible.foo?")?;
-    chk("test fallible.foo?!")?;
-    chk("test fallible[foo]?")?;
-    chk("test fallible[foo]?!")?;
-    chk("test foo? |? foo bar? | foo bar?!")?;
-    
-    println!();
-    println!(": Parameters");
-    chk("test 1.234 2.345 1.99999 0.000001")?;
-    chk("test 1 2 3")?;
-    chk("test 1 2 3 a=4")?;
-    chk("mul 2 (+ 1 2 3)")?;
-    chk("test foo: bar baz")?;
-    chk("test foo; bar baz")?;
-    chk("test [1 2 3 4 5]")?;
-    chk("test {a = 1, b=2, c=-3}")?;
-    
-    println!();
-    println!(": Pipes");
-    chk("0..10 | print $")?;
-    chk("testA 1 2 3 | testB 4 5 6 | testC 7 8 9")?;
-    chk("maybe-null |? accepts-null")?;
-    chk("outer | v1 | (inner v2 | v3) | v4")?;
-    
-    println!();
-    println!(": Execution Modifiers");
-    chk("conditional && execution")?;
-    chk("alternative || execution")?;
-    
-    println!();
-    println!(": Examples");
-    chk("echo \"Hello, World!\" @s.chat ")?;
-    chk("tp @a 0 0 0")?;
-    chk("tp @a @world.spawn")?;
-    chk("tp @a 0 100 0 rel=@self")?;
-    chk("for @a: tp [0 100 0]~$$")?;
-    chk("test 0..10")?;
-    chk("test (get1)..(get2 $$)")?;
-    
-    println!();
-    chk("alias FOO (BAR ARG)")?;
-    chk("alias FOO: BAR ARG")?;
-    
-    println!();
-    chk("e tag=FOO|del")?;
-    chk("e in=(box 0 0 0 8 8 8)|del")?;
-    chk("e is=item|del")?;
-    chk("$$|?le $.health 10|heal 10 5")?;
-    
-    println!();
-    chk("v fill (box -8 -8 -8 +8 +8 +8|offset $$) air")?;
-    chk("v|raytrace $$ 10m|v set $ air")?;
-    chk("v|raymarch $$ 10m|?is solid|v set $ glass")?;
-    
-    println!();
-    chk("raytrace $$ 10m elod=sphere")?;
-    chk("raytrace $$ 10m elod=bounds")?;
-    chk("raytrace $$ 10m elod=voxels")?;
-    chk("raytrace $$ 10m elod=hitbox")?;
-    chk("raytrace $$ 10m elod=phybox")?;
-    
-    println!();
-    chk("e|sphere $ 0.5m|raytrace $ max|?is marker|del")?;
-    chk("tp 0 0 0 motion=0")?;
-    chk("move forward for=1")?;
-    chk("set $$.motion: * 0.5 $")?;
-    chk("gamerules +foo -bar")?;
-    chk("e get U67e55044-10b1-426f-9247-bb680e5fe0c8")?;
-    chk("e get @67e55044-10b1-426f-9247-bb680e5fe0c8")?;
-    
+fn parse_constants() -> Result<(), ParseError> {
+    chks(SRC_CONSTANTS.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_numbers() -> Result<(), ParseError> {
+    chks(SRC_NUMBERS.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_strings() -> Result<(), ParseError> {
+    chks(SRC_STRINGS.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_references() -> Result<(), ParseError> {
+    chks(SRC_REFS.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_obj_references() -> Result<(), ParseError> {
+    chks(SRC_OBJ_REFS.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_numeric_arrays() -> Result<(), ParseError> {
+    chks(SRC_NUMARS.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_lists() -> Result<(), ParseError> {
+    chks(SRC_LISTS.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_dicts() -> Result<(), ParseError> {
+    chks(SRC_DICTS.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_operators() -> Result<(), ParseError> {
+    chks(SRC_OPERATORS.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_field() -> Result<(), ParseError> {
+    chks(SRC_FIELD.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_index() -> Result<(), ParseError> {
+    chks(SRC_INDEX.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_range() -> Result<(), ParseError> {
+    chks(SRC_RANGE.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_try() -> Result<(), ParseError> {
+    chks(SRC_TRY.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_params() -> Result<(), ParseError> {
+    chks(SRC_PARAMS.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_pipes() -> Result<(), ParseError> {
+    chks(SRC_PIPES.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_ifs() -> Result<(), ParseError> {
+    chks(SRC_IFS.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_examples() -> Result<(), ParseError> {
+    chks(SRC_EXAMPLES.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse() -> Result<(), ParseError> {
+    for src in SRC {
+        chks(src.lines())?;
+    }
     Ok(())
 }
 
@@ -251,4 +204,14 @@ fn chk(input: &str) -> Result<Expression, ParseError> {
     //eprintln!("<div><code>{}</code><br>{}</div>", input, output.to_html());
     
     Ok(output)
+}
+
+fn chks(input: impl Iterator<Item=&'static str>) -> Result<(), ParseError> {
+    for line in input
+        .filter(|l| !l.is_empty())
+        .filter(|l| !l.starts_with("//"))
+    {
+        chk(line)?;
+    }
+    Ok(())
 }

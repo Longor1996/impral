@@ -1,0 +1,9 @@
+print @_
+print @foo
+print @foo-bar
+print @foo_bar
+print @'foo'
+print @"foo"
+print @'foo bar'
+print @"foo bar"
+print @67e55044-10b1-426f-9247-bb680e5fe0c8

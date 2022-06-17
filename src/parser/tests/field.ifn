@@ -1,0 +1,16 @@
+print _.bar
+print $.bar
+print $$.bar
+print $foo.bar
+print @foo.bar
+print 123.bar
+print 0xF.bar
+print 45°.bar
+print (_).bar
+print (f).bar
+print [_].bar
+print {foo=_}.bar
+print is?.bar
+print is?!.bar
+print is?.bar?
+print is?!.bar?!

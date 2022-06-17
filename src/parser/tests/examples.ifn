@@ -1,0 +1,62 @@
+navigate "/gui"
+navigate "/gui/remote?caskeda.com"
+navigate "/gui/remote?caskeda.com/play"
+
+cli show
+cli set color false
+cli hide
+
+print "Hello, World!"
+0..10 | print $
+1..=10 | print $
+
+gamerule +firespread -friction gravity=0.1
+
+alias foo: bar
+alias foo: bar baz
+alias foo: bar _
+alias foo: bar _ baz=_
+
+set $$.health 100
+set $$.health: + $ 100
+
+spawn player at=[0 0 0] ctrl=null name=Longor skin=Longor
+cpart emitter {src=(sphere 0.5) vfx=sparks time=infinity} | e attach @Longor
+
+tp $$ 0 0 0
+tp $$ @world.spawn
+tp @_ 0 100 0 rel=$$
+e is=player | tp $$
+
+$$ | move forward for=1
+e | move jump
+e | can jump | print
+e |? can jump | move jump
+e |? can swim | move to (v find water)
+
+e |? is player | set $.motion: * $ 0.5
+
+e | del
+e tag=foo | del
+e is=item | del
+@Longor | del
+@"Lars K" | del
+@67e55044-10b1-426f-9247-bb680e5fe0c8 | del
+e |? < $.health 10 | heal $ 10
+e |? > $.health 99 | hurt $ 10
+e in=(box 0 0 0 8 8 8) | del
+e in=(box 0..=8 0..=8 0..=8) | del
+e in=(box 0..9 0..9 0..9) | del
+
+e | raytrace $ $$ && debug-line $.start $.end for=10
+e | sphere $ 0.5 | sweeptrace $ $$ && debug-line $.start $.end for=10
+
+raytrace $$ 10 +e elod=sphere
+raytrace $$ 10 +e elod=bounds
+raytrace $$ 10 +e elod=phybox
+raytrace $$ 10 +e elod=voxels
+raytrace $$ 10 +e +v elod=hitbox
+
+v fill (box -8 -8 -8 +8 +8 +8 | offset $$) air
+v trace $$ && v set $ air
+v march $$ 10 |? is solid | v set $ air
