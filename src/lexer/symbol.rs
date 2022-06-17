@@ -131,6 +131,10 @@ pub enum Symbol {
     #[strum(to_string="==")]
     EqEq,
     
+    /// `!=`
+    #[strum(to_string="!=")]
+    NotEq,
+    
     /// `<=`
     #[strum(to_string="<=")]
     EqLess,
@@ -169,6 +173,7 @@ impl Symbol {
     pub fn is_operator(&self) -> bool {
         matches!(self
             , Self::EqEq
+            | Self::NotEq
             | Self::EqGreater
             | Self::EqLess
             | Self::AngleLeft
@@ -178,6 +183,7 @@ impl Symbol {
             | Self::Star
             | Self::Incr
             | Self::Decr
+            | Self::DoubleStar
             | Self::Slash
             | Self::Tilde
             | Self::Caret
