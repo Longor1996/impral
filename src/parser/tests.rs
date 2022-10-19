@@ -12,13 +12,13 @@ fn sizes() {
     eprintln!("SizeOf LEX.L = {}", size_of::<Literal>());
     eprintln!("SizeOf LEX.S = {}", size_of::<Symbol>());
     eprintln!("SizeOf AST = {}", size_of::<Expression>());
-    eprintln!("- SizeOf AST.I = {}", size_of::<Invoke>());
+    eprintln!("- SizeOf AST.I = {}", size_of::<FnCall>());
     eprintln!("- SizeOf AST.P = {}", size_of::<Pipe>());
     eprintln!("SizeOf [AST;1] = {}", size_of::<ExpressionVec>());
     //eprintln!("SizeOf EXE.V = {}", size_of::<crate::values::ValContainer>());
     
     //assert!(size_of::<crate::values::ValContainer>() == 8, "The size of a ValContainer-struct should be exactly 8 bytes.");
-    assert!(dbg!(size_of::<Invoke>() <= 128), "The size of an Invoke-struct should be below 128 bytes.");
+    assert!(dbg!(size_of::<FnCall>() <= 128), "The size of an FnCall-struct should be below 128 bytes.");
 }
 
 const SRC_CONSTANTS: &str = include_str!("./tests/constants.ifn");

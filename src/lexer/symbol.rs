@@ -191,9 +191,17 @@ pub enum Symbol {
     #[strum(to_string="~>")]
     WaveArrow,
     
+    /// `+>`
+    #[strum(to_string="+>")]
+    PlusArrow,
+    
     /// `=>`
     #[strum(to_string="=>")]
-    FatArrow,
+    BindArrow,
+    
+    /// `#>`
+    #[strum(to_string="#>")]
+    GridArrow,
 }
 
 impl Symbol {

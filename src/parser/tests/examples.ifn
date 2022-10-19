@@ -60,3 +60,15 @@ raytrace $$ 10 +e +v elod=hitbox
 v fill (box -8 -8 -8 +8 +8 +8 | offset $$) air
 v trace $$ && v set $ air
 v march $$ 10 |? is solid | v set $ air
+
+v fill (box -8 -8 -8 +8 +8 +8)~$$ air
+v fill (box -8 -8 -8 +8 +8 +8)~chunk air
+v fill (box -8 -8 -8 +8 +8 +8)~region air
+v fill (box -8 -8 -8 +8 +8 +8)~[1 2 3] air
+v fill (box -8 -8 -8 +8 +8 +8)~(+ $$ [1 2 3]) air
+
+$$.(foo)
+$$.(foo bar)
+$$.(foo bar)~baz
+
+foo -> $bar

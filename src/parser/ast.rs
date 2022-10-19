@@ -12,7 +12,7 @@ pub enum Expression {
     Value(Literal),
     
     /// A function call / command invocation.
-    Invoke(Box<Invoke>),
+    FnCall(Box<FnCall>),
     
     /// A range from START to END, maybe INCLUSIVE.
     Range(Box<Expression>, Box<Expression>, bool),
@@ -22,6 +22,9 @@ pub enum Expression {
     
     /// A index/array access on the left expression.
     Index(Box<Expression>, Box<Expression>),
+    
+    /// A method call on the left expression.
+    Method(Box<Expression>, Box<FnCall>),
     
     /// Unwrap the left expression; throwing an error if bool is `true`.
     Try(Box<Expression>, bool),
@@ -33,9 +36,9 @@ pub enum Expression {
 /// A (small)vec of expression nodes.
 pub type ExpressionVec = SmallVec<[Expression; 1]>;
 
-/// A command (-node) to be evaluated.
+/// A function call (-node) to be evaluated.
 #[derive(Clone, Default, PartialEq)]
-pub struct Invoke {
+pub struct FnCall {
     /// The name of the command.
     pub name: CompactString,
     
@@ -94,9 +97,10 @@ impl std::fmt::Debug for Expression {
         match self {
             Expression::Empty => write!(f, "_"),
             Expression::Value(l) => std::fmt::Debug::fmt(l, f),
-            Expression::Invoke(c) => write!(f, "({:?})", c),
+            Expression::FnCall(c) => write!(f, "({:?})", c),
             Expression::Field(e, i) => write!(f, "{e:?}.{}", bareword_format(i)),
-            Expression::Index(e, i) => write!(f, "{e:?}[{i:?}]"),
+            Expression::Index(e, i) => write!(f, "{e:?}.[{i:?}]"),
+            Expression::Method(e, i) => write!(f, "{e:?}.({i:?})"),
             Expression::Range(s, e, inc) => if *inc {
                 write!(f, "{s:?}..={e:?}")
             } else {
@@ -112,13 +116,13 @@ impl std::fmt::Debug for Expression {
     }
 }
 
-impl From<Invoke> for Expression {
-    fn from(i: Invoke) -> Self {
-        Self::Invoke(i.into())
+impl From<FnCall> for Expression {
+    fn from(i: FnCall) -> Self {
+        Self::FnCall(i.into())
     }
 }
 
-impl std::fmt::Debug for Invoke {
+impl std::fmt::Debug for FnCall {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", &self.name)?;
         for arg in &self.pos_args {
@@ -147,3 +151,5 @@ impl std::fmt::Debug for Pipe {
     }
 }
 
+#[cfg(any(feature = "html_fmt", test))]
+pub mod html;

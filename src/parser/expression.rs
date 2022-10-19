@@ -21,24 +21,36 @@ pub fn parse_expression(
     
     // Postfix operator parsing...
     loop {
-        // Braket? Index!
-        if let Some(mut tokens) = consume_group(tokens, Symbol::BraketLeft) {
-            let index = parse_expression(&mut tokens, true, true)?;
-            
-            if tokens.peek().is_some() {
-                return Err(ParseError::ExpectButGot("end of expression".into(), "more tokens".into()))
+        // Dot? Field or Index!
+        if consume_symbol(tokens, Symbol::Dot) {
+            // Braket? Index!
+            if let Some(mut tokens) = consume_group(tokens, Symbol::BraketLeft) {
+                let index = parse_expression(&mut tokens, true, true)?;
+                
+                if tokens.peek().is_some() {
+                    return Err(ParseError::ExpectButGot("end of expression for index access".into(), "more tokens".into()))
+                }
+                
+                expr = Expression::Index(Box::new(expr), Box::new(index));
+                continue;
             }
             
-            expr = Expression::Index(Box::new(expr), Box::new(index));
-            continue;
-        }
-        
-        // Dot? Field!
-        if consume_symbol(tokens, Symbol::Dot) {
+            // Paren? Method!
+            if let Some(mut tokens) = consume_group(tokens, Symbol::ParenLeft) {
+                let fncall = parse_command(&mut tokens, None)?;
+                
+                if tokens.peek().is_some() {
+                    return Err(ParseError::ExpectButGot("end of expression for method call".into(), "more tokens".into()))
+                }
+                
+                expr = Expression::Method(Box::new(expr), Box::new(fncall));
+                continue;
+            }
+            
             let member = if let Some(name) = consume_string(tokens) {
                 name
             } else {
-                return Err(ParseError::ExpectButGot("member name".into(), "something else".into()))
+                return Err(ParseError::ExpectButGot("member name for field access".into(), "something else".into()))
             };
             
             expr = Expression::Field(Box::new(expr), member);
@@ -77,7 +89,7 @@ pub fn parse_expression(
                 = content {s.is_postop().unwrap()}
                 else {unreachable!()};
             
-            expr = Expression::Invoke(Invoke {
+            expr = Expression::FnCall(FnCall {
                 name: symbol.into(),
                 pos_args: smallvec![expr],
                 nom_args: Default::default(),
@@ -88,12 +100,21 @@ pub fn parse_expression(
         // Tilde? Relation!
         if consume_symbol(tokens, Symbol::Tilde) {
             let to = parse_item(tokens, false)?;
-            expr = Expression::Invoke(Invoke {
-                name: "relative".into(),
-                pos_args: smallvec![expr, to],
-                nom_args: Default::default(),
-            }.into());
-            continue;
+            if let Expression::Value(Literal::Str(str)) = to {
+                expr = Expression::FnCall(FnCall {
+                    name: format!("relative_to_{str}").into(),
+                    pos_args: smallvec![expr],
+                    nom_args: Default::default(),
+                }.into());
+                continue;
+            } else {
+                expr = Expression::FnCall(FnCall {
+                    name: "relative".into(),
+                    pos_args: smallvec![expr, to],
+                    nom_args: Default::default(),
+                }.into());
+                continue;
+            }
         }
         
         // Pipe? Pipe!
@@ -184,8 +205,6 @@ pub fn parse_item(
         }
     }
     
-    // Is it a underscore?
-    
     // Underscore? Return an empty!
     if let TokenContent::Symbol(Symbol::Underscore) = token.content {
         return Ok(Expression::Empty)
@@ -207,7 +226,7 @@ pub fn parse_item(
             
             Symbol::BraketLeft => parse_list(
                 &mut subtokens.into_iter().peekmore()
-            ).map(|l| Expression::Invoke(Box::new(Invoke {
+            ).map(|l| Expression::FnCall(Box::new(FnCall {
                 name: "list".into(),
                 pos_args: l,
                 ..Default::default()
@@ -215,7 +234,7 @@ pub fn parse_item(
             
             Symbol::CurlyLeft => parse_map(
                 &mut subtokens.into_iter().peekmore()
-            ).map(|d| Expression::Invoke(Box::new(Invoke {
+            ).map(|d| Expression::FnCall(Box::new(FnCall {
                 name: "dict".into(),
                 nom_args: d,
                 ..Default::default()

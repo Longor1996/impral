@@ -27,7 +27,7 @@ pub fn try_into_command_name(token: &Token) -> Result<smartstring::alias::Compac
 pub fn parse_command(
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     terminator: Option<Symbol>
-) -> Result<Invoke, ParseError> {
+) -> Result<FnCall, ParseError> {
     let name = match tokens.next() {
         Some(n) => n,
         None => return Err(ParseError::ExpectButEnd("a command name")),
@@ -44,8 +44,8 @@ pub fn parse_command_body(
     name: CompactString,
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     terminator: Option<Symbol>
-) -> Result<Invoke, ParseError> {
-    let mut cmd = Invoke {
+) -> Result<FnCall, ParseError> {
+    let mut cmd = FnCall {
         name,
         pos_args: Default::default(),
         nom_args: Default::default(),
@@ -73,7 +73,7 @@ pub fn parse_command_body(
         }
         
         if consume_symbol(tokens, Symbol::DoubleAmpersand) {
-            let previous = std::mem::replace(&mut cmd, Invoke {
+            let previous = std::mem::replace(&mut cmd, FnCall {
                 name: "if-then".into(),
                 pos_args: Default::default(),
                 nom_args: Default::default(),
@@ -87,7 +87,7 @@ pub fn parse_command_body(
         }
         
         if consume_symbol(tokens, Symbol::DoublePipe) {
-            let previous = std::mem::replace(&mut cmd, Invoke {
+            let previous = std::mem::replace(&mut cmd, FnCall {
                 name: "if-else".into(),
                 pos_args: Default::default(),
                 nom_args: Default::default(),
