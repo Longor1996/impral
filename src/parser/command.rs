@@ -102,7 +102,7 @@ pub fn parse_command_body(
         
         if consume_if(tokens, |tc|
             matches!(tc, TokenContent::Symbol(peeked) if peeked.is_end_delimiter())
-        ) {
+        ).is_some() {
             break // natural end of command, due to delimiter.
         }
         

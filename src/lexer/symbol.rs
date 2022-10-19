@@ -103,13 +103,13 @@ pub enum Symbol {
     #[strum(to_string="$")]
     DollarSign,
     
-    /// `%`
-    #[strum(to_string="%")]
-    Percentage,
-    
     /// `&`
     #[strum(to_string="&")]
     Ampersand,
+    
+    /// `%`
+    #[strum(to_string="%")]
+    Percentage,
     
     /// `°`
     #[strum(to_string="°")]
@@ -221,6 +221,17 @@ impl Symbol {
             | Self::QuestionMark
             | Self::ExclamationMark
         )
+    }
+    
+    /// Is the symbol a postfix operator?
+    pub fn is_postop(&self) -> Option<&'static str> {
+        match self {
+            Self::Percentage => Some("into_percent"),
+            Self::Circle => Some("into_radians"),
+            Self::Pow2 => Some("into_squared"),
+            Self::Pow3 => Some("into_cubed"),
+            _ => None
+        }
     }
     
     /// Is the symbol a delimiter?

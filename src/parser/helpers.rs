@@ -16,14 +16,17 @@ pub fn match_if(
 pub fn consume_if(
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     predicate: impl FnOnce(&TokenContent) -> bool
-) -> bool {
+) -> Option<Token> {
     match tokens.peek() {
         Some(Token { content, .. }) => if predicate(content) {
-            tokens.next(); true
+            match tokens.next() {
+                Some(token) => Some(token),
+                None => unreachable!(),
+            }
         } else {
-            false
+            None
         },
-        None => false
+        None => None
     }
 }
 
@@ -82,5 +85,5 @@ pub fn consume_symbol(
 ) -> bool {
     consume_if(tokens, |tc|
         matches!(tc, TokenContent::Symbol(peeked) if *peeked == symbol)
-    )
+    ).is_some()
 }

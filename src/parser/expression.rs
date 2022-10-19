@@ -69,22 +69,28 @@ pub fn parse_expression(
             continue;
         }
         
+        // Parse arbitrary postfix operators...
+        if let Some(Token {content, ..}) = consume_if(tokens, |token| match token {
+            TokenContent::Symbol(s) if s.is_postop().is_some() => true, _ => false
+        }) {
+            let symbol = if let TokenContent::Symbol(s)
+                = content {s.is_postop().unwrap()}
+                else {unreachable!()};
+            
+            expr = Expression::Invoke(Invoke {
+                name: symbol.into(),
+                pos_args: smallvec![expr],
+                nom_args: Default::default(),
+            }.into());
+            continue;
+        }
+        
         // Tilde? Relation!
         if consume_symbol(tokens, Symbol::Tilde) {
             let to = parse_expression(tokens, false, false)?;
             expr = Expression::Invoke(Invoke {
                 name: "relative".into(),
                 pos_args: smallvec![expr, to],
-                nom_args: Default::default(),
-            }.into());
-            continue;
-        }
-        
-        // Circle? deg2rad!
-        if consume_symbol(tokens, Symbol::Circle) {
-            expr = Expression::Invoke(Invoke {
-                name: "deg2rad".into(),
-                pos_args: smallvec![expr],
                 nom_args: Default::default(),
             }.into());
             continue;
