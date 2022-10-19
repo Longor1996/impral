@@ -87,7 +87,7 @@ pub fn parse_expression(
         
         // Tilde? Relation!
         if consume_symbol(tokens, Symbol::Tilde) {
-            let to = parse_expression(tokens, false, false)?;
+            let to = parse_item(tokens, false)?;
             expr = Expression::Invoke(Invoke {
                 name: "relative".into(),
                 pos_args: smallvec![expr, to],

@@ -9,6 +9,7 @@ print 100%.bar
 print 45°.bar
 print 32².bar
 print 32³.bar
+print 32³~$$.bar
 print (_).bar
 print (f).bar
 print [_].bar
