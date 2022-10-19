@@ -242,6 +242,17 @@ impl Symbol {
         }
     }
     
+    /// Is the symbol a arrow operator?
+    pub fn is_arrow(&self) -> bool {
+        matches!{self
+            , Self::ThinArrow
+            | Self::WaveArrow
+            | Self::PlusArrow
+            | Self::BindArrow
+            | Self::GridArrow
+        }
+    }
+    
     /// Is the symbol a delimiter?
     pub fn is_delimiter(&self) -> bool {
         self.is_start_delimiter() || self.is_end_delimiter()

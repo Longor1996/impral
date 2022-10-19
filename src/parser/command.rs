@@ -66,6 +66,13 @@ pub fn parse_command_body(
             break; // natural end of command, due to semicolon
         }
         
+        if match_if(tokens, |t| match t {
+            TokenContent::Symbol(s) if s.is_arrow() => true, _ => false
+        }) {
+            // We MATCH, but NOT drop, the arrow...
+            break; // natural end of command, due to arrow
+        }
+        
         if consume_symbol(tokens, Symbol::DoubleDot) {
             let subcommand = parse_command(tokens, None)?;
             cmd.pos_args.push(subcommand.into());

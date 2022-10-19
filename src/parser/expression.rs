@@ -81,6 +81,24 @@ pub fn parse_expression(
             continue;
         }
         
+        // ThinArrow? Assign variable!
+        if consume_symbol(tokens, Symbol::ThinArrow) {
+            if let Some(Token {content: TokenContent::Literal(Literal::RefVar(var)), ..})
+                = consume_if(tokens, |token| match token {
+                    TokenContent::Literal(Literal::RefVar(_)) => true, _ => false
+                }
+            ) {
+                expr = Expression::FnCall(FnCall {
+                    name: "set".into(),
+                    pos_args: smallvec![Expression::Value(Literal::Str(var)), expr],
+                    nom_args: Default::default(),
+                }.into());
+                continue;
+            } else {
+                return Err(ParseError::ExpectButGot("a variable ($NAME)".into(), format!("{:?}",tokens.peek()).into()))
+            }
+        }
+        
         // Parse arbitrary postfix operators...
         if let Some(Token {content, ..}) = consume_if(tokens, |token| match token {
             TokenContent::Symbol(s) if s.is_postop().is_some() => true, _ => false
