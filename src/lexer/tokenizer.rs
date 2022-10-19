@@ -245,8 +245,7 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                             },
                         };
                         
-                        let integer = sign.then(||-integer).unwrap_or(integer);
-                        
+                        let integer = if sign { -integer } else { integer };
                         array.push((last_idx, last_idx, Literal::Int(integer)).into());
                     }
                     
