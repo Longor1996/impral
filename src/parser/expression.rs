@@ -117,12 +117,18 @@ pub fn parse_pipe(
     };
     
     loop {
-        let filter = consume_symbol(tokens, Symbol::QuestionMark);
+        let segment = if consume_symbol(tokens, Symbol::QuestionMark) {
+            PipeSeg::Exclude {
+                predicate: parse_expression(tokens, true, false)?,
+            }
+        }
+        else {
+            PipeSeg::Mapping {
+                mapper: parse_expression(tokens, true, false)?,
+            }
+        };
         
-        pipe.stages.push(PipeSeg {
-            filter,
-            invoke: parse_expression(tokens, true, false)?,
-        });
+        pipe.stages.push(segment);
         
         if consume_symbol(tokens, Symbol::Pipe) {
             continue;

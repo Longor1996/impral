@@ -60,12 +60,18 @@ pub struct Pipe {
 
 /// A segment of a pipe.
 #[derive(Clone, PartialEq)]
-pub struct PipeSeg {
-    /// If true, the invoke result is used as filter.
-    pub filter: bool,
+pub enum PipeSeg {
     
-    /// This segments invoke.
-    pub invoke: Expression,
+    /// A thing goes in, a(nother) thing comes out.
+    Mapping {
+        /// An expression with a `$`-val in it, hopefully.
+        mapper: Expression,
+    },
+    /// Filtering out elements given a `predicate`.
+    Exclude {
+        /// An expression that returns a truthy/falsy value.
+        predicate: Expression
+    },
 }
 
 // ----------------------------------------------------------------------------
@@ -118,9 +124,11 @@ impl std::fmt::Debug for Pipe {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.source)?;
         for seg in &self.stages {
-            write!(f, " |")?;
-            if seg.filter {write!(f, "?")?}
-            write!(f, " {:?}", seg.invoke)?
+            write!(f, " |")?; // all segments start with a `|`
+            match seg {
+                PipeSeg::Mapping { mapper } => write!(f, " {mapper:?}")?,
+                PipeSeg::Exclude { predicate } => write!(f, "? {predicate:?}")?,
+            }
         }
         write!(f, "")
     }
