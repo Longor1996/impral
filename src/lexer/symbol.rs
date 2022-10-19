@@ -115,6 +115,14 @@ pub enum Symbol {
     #[strum(to_string="°")]
     Circle,
     
+    /// `²`
+    #[strum(to_string="²")]
+    Pow2,
+    
+    /// `³`
+    #[strum(to_string="³")]
+    Pow3,
+    
     /// `|`
     #[strum(to_string="|")]
     Pipe,
@@ -147,6 +155,10 @@ pub enum Symbol {
     #[strum(to_string=">=")]
     EqGreater,
     
+    /// `<>`
+    #[strum(to_string="<>")]
+    Compare,
+    
     /// `++`
     #[strum(to_string="++")]
     Incr,
@@ -170,6 +182,18 @@ pub enum Symbol {
     /// `**`
     #[strum(to_string="**")]
     DoubleStar,
+    
+    /// `->`
+    #[strum(to_string="->")]
+    ThinArrow,
+    
+    /// `~>`
+    #[strum(to_string="~>")]
+    WaveArrow,
+    
+    /// `=>`
+    #[strum(to_string="=>")]
+    FatArrow,
 }
 
 impl Symbol {
@@ -182,6 +206,7 @@ impl Symbol {
             | Self::NotEq
             | Self::EqGreater
             | Self::EqLess
+            | Self::Compare
             | Self::AngleLeft
             | Self::AngleRight
             | Self::Plus

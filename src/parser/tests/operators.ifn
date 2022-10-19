@@ -10,4 +10,5 @@ print _
 != _ _ _
 >= _ _ _
 <= _ _ _
+<> _ _
 any-ascii-str-can-be-an-operator _ _ _
