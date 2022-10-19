@@ -36,7 +36,7 @@ pub enum Expression {
 /// A (small)vec of expression nodes.
 pub type ExpressionVec = SmallVec<[Expression; 1]>;
 
-/// A function call (-node) to be evaluated.
+/// A function call (-node) to be evaluated; created via [`crate::parser::command::parse_command`].
 #[derive(Clone, Default, PartialEq)]
 pub struct FnCall {
     /// The name of the command.

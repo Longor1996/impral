@@ -20,7 +20,7 @@ pub enum Literal {
     /// 64-bit Floating Point Number
     Dec(f64),
     
-    /// Uid (`@67e55044-10b1-426f-9247-bb680e5fe0c8`)
+    /// Uid (`U67e55044-10b1-426f-9247-bb680e5fe0c8`)
     Uid(uuid::Uuid),
     
     /// String | Bareword
@@ -39,12 +39,18 @@ pub enum Literal {
     RefVar(CompactString),
     
     /// Object Idx Reference (`@0`)
+    /// 
+    /// A global reference to an object identified via a plain integer.
     ObjIdx(usize),
     
     /// Object Uid Reference (`@67e55044-10b1-426f-9247-bb680e5fe0c8`)
+    /// 
+    /// A global reference to an object identified via UUID.
     ObjUid(uuid::Uuid),
     
     /// Object Key Reference (`@NAME` / `@'NAME'` / `@"NAME"`)
+    /// 
+    /// A global reference to a named object.
     ObjKey(CompactString)
 }
 
