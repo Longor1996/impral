@@ -2,10 +2,14 @@
 
 use std::fmt::Write;
 use smartstring::alias::CompactString;
-use strum_macros::{Display, EnumString, IntoStaticStr};
+use strum_macros::{Display, EnumString, EnumIter, EnumDiscriminants, IntoStaticStr};
 
 /// A enum of the set of known symbols.
-#[derive(Clone, Copy, PartialEq, Eq, Display, EnumString, IntoStaticStr)]
+/// 
+/// **Note:** Symbols can only be a single character or a pair of characters.
+#[derive(Clone, Copy, PartialEq, Eq, Display, EnumString, EnumIter, EnumDiscriminants, IntoStaticStr)]
+#[strum_discriminants(name(SymbolName))]
+#[strum_discriminants(derive(Display))]
 pub enum Symbol {
     /// `(`
     #[strum(to_string="(")]
@@ -170,6 +174,8 @@ pub enum Symbol {
 
 impl Symbol {
     /// Is the symbol a operator?
+    /// 
+    /// Operators can be used in place of function names.
     pub fn is_operator(&self) -> bool {
         matches!(self
             , Self::EqEq
