@@ -122,6 +122,17 @@ pub fn parse_pipe(
                 predicate: parse_expression(tokens, true, false)?,
             }
         }
+        else if consume_symbol(tokens, Symbol::ExclamationMark) {
+            if match_symbol(tokens, Symbol::Pipe) || tokens.peek().is_none() {
+                PipeSeg::Collect
+            }
+            else {
+                PipeSeg::Folding {
+                    initial: parse_expression(tokens, true, false)?,
+                    reducer: parse_expression(tokens, true, false)?,
+                }
+            }
+        }
         else {
             PipeSeg::Mapping {
                 mapper: parse_expression(tokens, true, false)?,

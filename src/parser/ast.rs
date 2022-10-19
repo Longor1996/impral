@@ -61,12 +61,23 @@ pub struct Pipe {
 /// A segment of a pipe.
 #[derive(Clone, PartialEq)]
 pub enum PipeSeg {
+    /// Collect the pipe into a data-structure, possibly depending on the receiver expression.
+    Collect,
     
     /// A thing goes in, a(nother) thing comes out.
     Mapping {
         /// An expression with a `$`-val in it, hopefully.
         mapper: Expression,
     },
+    
+    /// Given an `initial` value, use the `reducer` to fold the pipe into 'one' value.
+    Folding {
+        /// The initial value for the reducer.
+        initial: Expression,
+        /// The expression that receives a `$`-val as input and a `$!`-val as accumulator/state.
+        reducer: Expression,
+    },
+    
     /// Filtering out elements given a `predicate`.
     Exclude {
         /// An expression that returns a truthy/falsy value.
@@ -126,7 +137,9 @@ impl std::fmt::Debug for Pipe {
         for seg in &self.stages {
             write!(f, " |")?; // all segments start with a `|`
             match seg {
+                PipeSeg::Collect => write!(f, "!")?,
                 PipeSeg::Mapping { mapper } => write!(f, " {mapper:?}")?,
+                PipeSeg::Folding { initial, reducer } => write!(f, "! {initial:?} {reducer:?}")?,
                 PipeSeg::Exclude { predicate } => write!(f, "? {predicate:?}")?,
             }
         }

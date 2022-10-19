@@ -19,6 +19,9 @@ print _? |? _?
 print _?! |? _?
 print _?! |? _?!
 
+print _ |!
+print _ |! 0 min $ $acc
+
 print | (print | print)
 print | (print | print) | (print | print | print)
 

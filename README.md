@@ -52,6 +52,8 @@ A very quick overview:
   - First expression is the *source*
   - Expressions separated by `|`
   - Filters: `… |? bar | …`
+  - Folding: `… |! 0 min $ $acc | …`
+  - Collecting: `… |!`
   - Chaining! `… | … |? … | …`
 - Fallible operations!
   - Any expression followed by `?` gets unwrapped to the default value.
