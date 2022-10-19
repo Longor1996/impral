@@ -6,7 +6,8 @@ authors = ["Longor1996 <lalongok@gmail.com>"]
 edition = "2021"
 
 description = "A command parsing and evaluation library for a LISP dialect, specialized for commandline input."
-keywords = ["script", "scripting", "language", "lisp"]
+keywords = ["script", "scripting", "language", "lisp", "dsl"]
+categories = ["compilers", "command-line-interface"]
 
 readme = "README.md"
 homepage = "https://github.com/Longor1996/impral"

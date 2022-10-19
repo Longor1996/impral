@@ -219,5 +219,5 @@ pub fn parse_item(
         })
     }
     
-    return Err(ParseError::Unexpected(format!("token content: {:?}", token.content).into()))
+    Err(ParseError::Unexpected(format!("token content: {:?}", token.content).into()))
 }

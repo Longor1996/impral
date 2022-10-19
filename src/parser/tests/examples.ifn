@@ -49,7 +49,7 @@ e in=(box 0..=8 0..=8 0..=8) | del
 e in=(box 0..9 0..9 0..9) | del
 
 e | raytrace $ $$ && debug-line $.start $.end for=10
-e | sphere $ 0.5 | sweeptrace $ $$ && debug-line $.start $.end for=10
+e | sphere $ 0.5 | sweepcast $ $$ && debug-line $.start $.end for=10
 
 raytrace $$ 10 +e elod=sphere
 raytrace $$ 10 +e elod=bounds

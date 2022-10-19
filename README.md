@@ -1,6 +1,6 @@
 # IMPRAL
 
-IMPRAL is a command parsing and evaluation library for a LISP-ish dialect, intended for reasonably ergonomic and specialized commandline input *within* larger applications, games and frameworks.
+IMPRAL is a command parsing and evaluation library for a LISP-ish dialect, intended for reasonably ergonomic and specialized command-line input *within* larger applications, games and frameworks.
 
 > **NOTICE:**  
 > Currently incomplete/still in development. Expect breaking changes.  
@@ -29,7 +29,7 @@ A very quick overview:
 - Data structures:
   - Lists (eg: `[ 1, 2, 3 ]`, commas optional)
   - Dicts (eg: `{ a=1, b=2, c=3 }`, commas optional)
-  - Radixed number lists (`0x[C0 +FF -EE]`)
+  - Radix number lists (`0x[C0 +FF -EE]`)
 - References!
   - Result reference: `$`
   - Context reference: `$$`
@@ -40,14 +40,14 @@ A very quick overview:
 - Operators!
   - Arithmetic (`+ - * / **`)
   - Equality (`== != < > <= >=`)
-  - Misc (`? ! ~ ^ ++ --`)
+  - Misc. (`? ! ~ ^ ++ --`)
 - Fields and indices!
   - Any item followed by a dot and a name is a field access: `_.name`
   - Any item followed by a bracketed expression is a index access: `_[index]`
 - Ranges!
   - Any two expressions, that are not themselves ranges, separated by two dots.
   - Optional 'last-inclusive' flag can be set by adding a `=` after the dots.
-  - ie: `_ .. _` and `_ ..= _`
+  - i.e.: `_ .. _` and `_ ..= _`
 - Pipes!
   - First expression is the *source*
   - Expressions separated by `|`
@@ -156,7 +156,7 @@ and it's items be passed thru the pipe, instead of the iterator itself.
 
 ### Field- and Index-Access
 
-By using the `_.FIELD`- and `_[INDEX]`-syntax, subvalues may be accessed.
+By using the `_.FIELD`- and `_[INDEX]`-syntax, subitems (properties/fields/elements/etc.) may be accessed.
 
 ### Ranges
 
