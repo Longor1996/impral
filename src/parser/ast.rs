@@ -33,6 +33,12 @@ pub enum Expression {
     Pipe(Box<Pipe>),
 }
 
+impl Default for Expression {
+    fn default() -> Self {
+        Self::Empty
+    }
+}
+
 /// A (small)vec of expression nodes.
 pub type ExpressionVec = SmallVec<[Expression; 1]>;
 
