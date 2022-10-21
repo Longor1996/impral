@@ -25,6 +25,7 @@ pub fn try_into_command_name(token: &Token) -> Result<smartstring::alias::Compac
 
 /// Parses the stream of tokens into a command-expression.
 pub fn parse_command(
+    parser: &mut Parser,
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     terminator: Option<Symbol>
 ) -> Result<FnCall, ParseError> {
@@ -36,11 +37,12 @@ pub fn parse_command(
     let name: CompactString = try_into_command_name(&name)?;
     
     // At this point, we have a name.
-    parse_command_body(name, tokens, terminator)
+    parse_command_body(parser, name, tokens, terminator)
 }
 
 /// Parses the stream of tokens into a command-expression.
 pub fn parse_command_body(
+    parser: &mut Parser,
     name: CompactString,
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     terminator: Option<Symbol>
@@ -74,7 +76,7 @@ pub fn parse_command_body(
         }
         
         if consume_symbol(tokens, Symbol::DoubleDot) {
-            let subcommand = parse_command(tokens, None)?;
+            let subcommand = parse_command(parser, tokens, None)?;
             cmd.pos_args.push(subcommand.into());
             break; // natural end of command, due to subcommand
         }
@@ -88,7 +90,7 @@ pub fn parse_command_body(
             
             cmd.pos_args.push(previous.into());
             
-            let subcommand = parse_command(tokens, None)?;
+            let subcommand = parse_command(parser, tokens, None)?;
             cmd.pos_args.push(subcommand.into());
             break; // natural end of command, due to IF-THEN wrapper command
         }
@@ -102,7 +104,7 @@ pub fn parse_command_body(
             
             cmd.pos_args.push(previous.into());
             
-            let subcommand = parse_command(tokens, None)?;
+            let subcommand = parse_command(parser, tokens, None)?;
             cmd.pos_args.push(subcommand.into());
             break; // natural end of command, due to IF-ELSE wrapper command
         }
@@ -143,7 +145,7 @@ pub fn parse_command_body(
             // EXPRESSION
             
             // ...starting with what may just be a expression...
-            let expr = parse_expression(tokens, false, false)?;
+            let expr = parse_expression(parser, tokens, false, false)?;
             
             if consume_symbol(tokens, Symbol::EqualSign) {
                 // (l)expr into key
@@ -156,7 +158,7 @@ pub fn parse_command_body(
                 };
                 
                 // parse value
-                let rexpr = parse_expression(tokens, false, false)?;
+                let rexpr = parse_expression(parser, tokens, false, false)?;
                 
                 cmd.nom_args.insert(lexpr, rexpr);
                 no_more_pos_args = true;

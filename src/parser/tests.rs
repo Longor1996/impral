@@ -179,7 +179,9 @@ fn chk(input: &str) -> Result<Expression, ParseError> {
     let mut stream = tokenize(input);
     let mut stream = groupenize(&mut stream, None);
     
+    let mut parser: Parser = Parser::default();
     let output = parse_expression(
+        &mut parser,
         &mut stream,
         true,
         true

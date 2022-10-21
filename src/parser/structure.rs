@@ -4,6 +4,7 @@ use super::*;
 
 /// Parses the stream of tokens into a list.
 pub fn parse_list(
+    parser: &mut Parser,
     tokens: &mut PeekableTokenStream<impl TokenStream>
 ) -> Result<ExpressionVec, ParseError> {
     let mut list = ExpressionVec::default();
@@ -21,7 +22,7 @@ pub fn parse_list(
             continue;
         }
         
-        let expr = parse_expression(tokens, false, true)?;
+        let expr = parse_expression(parser, tokens, false, true)?;
         list.push(expr);
     }
 
@@ -30,6 +31,7 @@ pub fn parse_list(
 
 /// Parses the stream of tokens into a key/value-map.
 pub fn parse_map(
+    parser: &mut Parser,
     tokens: &mut PeekableTokenStream<impl TokenStream>
 ) -> Result<FxHashMap<CompactString, Expression>, ParseError> {
     let mut map = FxHashMap::default();
@@ -53,7 +55,7 @@ pub fn parse_map(
             }
             // else: everything checks out, continue on...
             
-            let expr = parse_expression(tokens, false, true)?;
+            let expr = parse_expression(parser, tokens, false, true)?;
             map.insert(key, expr);
             continue;
         }

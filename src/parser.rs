@@ -26,5 +26,9 @@ pub use error::*;
 pub mod ast;
 pub use ast::*;
 
+/// An active parser.
+pub struct Parser {
+}
+
 #[cfg(test)]
 mod tests;

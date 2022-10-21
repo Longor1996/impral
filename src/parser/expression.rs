@@ -6,6 +6,7 @@ use super::*;
 
 /// Parses a `TokenStream` into an AST.
 pub fn parse_expression(
+    parser: &mut Parser,
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     start_cmd: bool,
     start_pipe: bool
@@ -17,7 +18,7 @@ pub fn parse_expression(
     }
     
     // Try to parse an expression item...
-    let mut expr = parse_item(tokens, start_cmd)?;
+    let mut expr = parse_item(parser, tokens, start_cmd)?;
     
     // Postfix operator parsing...
     loop {
@@ -25,7 +26,7 @@ pub fn parse_expression(
         if consume_symbol(tokens, Symbol::Dot) {
             // Braket? Index!
             if let Some(mut tokens) = consume_group(tokens, Symbol::BraketLeft) {
-                let index = parse_expression(&mut tokens, true, true)?;
+                let index = parse_expression(parser, &mut tokens, true, true)?;
                 
                 if tokens.peek().is_some() {
                     return Err(ParseError::ExpectButGot("end of expression for index access".into(), "more tokens".into()))
@@ -37,7 +38,7 @@ pub fn parse_expression(
             
             // Paren? Method!
             if let Some(mut tokens) = consume_group(tokens, Symbol::ParenLeft) {
-                let fncall = parse_command(&mut tokens, None)?;
+                let fncall = parse_command(parser, &mut tokens, None)?;
                 
                 if tokens.peek().is_some() {
                     return Err(ParseError::ExpectButGot("end of expression for method call".into(), "more tokens".into()))
@@ -64,7 +65,7 @@ pub fn parse_expression(
             }
             
             let inclusive = consume_symbol(tokens, Symbol::EqualSign);
-            let end = parse_expression(tokens, false, false)?;
+            let end = parse_expression(parser, tokens, false, false)?;
             
             if let Expression::Range(_, _, _) = end {
                 return Err(ParseError::ExpectButGot("an end that is not a range".into(), "an end that is a range".into()))
@@ -117,7 +118,7 @@ pub fn parse_expression(
         
         // Tilde? Relation!
         if consume_symbol(tokens, Symbol::Tilde) {
-            let to = parse_item(tokens, false)?;
+            let to = parse_item(parser, tokens, false)?;
             if let Expression::Value(Literal::Str(str)) = to {
                 expr = Expression::FnCall(FnCall {
                     name: format!("relative_to_{str}").into(),
@@ -137,7 +138,7 @@ pub fn parse_expression(
         
         // Pipe? Pipe!
         if start_pipe && consume_symbol(tokens, Symbol::Pipe) {
-            expr = Expression::Pipe(parse_pipe(tokens, expr)?);
+            expr = Expression::Pipe(parse_pipe(parser, tokens, expr)?);
             continue;
         }
         
@@ -149,6 +150,7 @@ pub fn parse_expression(
 
 /// Parses a `TokenStream` into a pipe.
 pub fn parse_pipe(
+    parser: &mut Parser,
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     expr: Expression
 ) -> Result<Box<Pipe>, ParseError> {
@@ -164,7 +166,7 @@ pub fn parse_pipe(
     loop {
         let segment = if consume_symbol(tokens, Symbol::QuestionMark) {
             PipeSeg::Exclude {
-                predicate: parse_expression(tokens, true, false)?,
+                predicate: parse_expression(parser, tokens, true, false)?,
             }
         }
         else if consume_symbol(tokens, Symbol::ExclamationMark) {
@@ -173,14 +175,14 @@ pub fn parse_pipe(
             }
             else {
                 PipeSeg::Folding {
-                    initial: parse_expression(tokens, true, false)?,
-                    reducer: parse_expression(tokens, true, false)?,
+                    initial: parse_expression(parser, tokens, true, false)?,
+                    reducer: parse_expression(parser, tokens, true, false)?,
                 }
             }
         }
         else {
             PipeSeg::Mapping {
-                mapper: parse_expression(tokens, true, false)?,
+                mapper: parse_expression(parser, tokens, true, false)?,
             }
         };
         
@@ -198,6 +200,7 @@ pub fn parse_pipe(
 
 /// Parses a `TokenStream` into an item (piece of an expression).
 pub fn parse_item(
+    parser: &mut Parser,
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     start_cmd: bool
 ) -> Result<Expression, ParseError> {
@@ -219,7 +222,7 @@ pub fn parse_item(
     // Is it a command?
     if start_cmd {
         if let Ok(command_name) = try_into_command_name(&token) {
-            return parse_command_body(command_name, tokens, None).map(|i|i.into())
+            return parse_command_body(parser, command_name, tokens, None).map(|i|i.into())
         }
     }
     
@@ -237,12 +240,14 @@ pub fn parse_item(
     if let TokenContent::Group(kind, subtokens) = token.content {
         return Ok(match kind {
             Symbol::ParenLeft => parse_expression(
+                parser,
                 &mut subtokens.into_iter().peekmore(),
                 true,
                 true
             )?,
             
             Symbol::BraketLeft => parse_list(
+                parser,
                 &mut subtokens.into_iter().peekmore()
             ).map(|l| Expression::FnCall(Box::new(FnCall {
                 name: "list".into(),
@@ -251,6 +256,7 @@ pub fn parse_item(
             })))?,
             
             Symbol::CurlyLeft => parse_map(
+                parser,
                 &mut subtokens.into_iter().peekmore()
             ).map(|d| Expression::FnCall(Box::new(FnCall {
                 name: "dict".into(),
