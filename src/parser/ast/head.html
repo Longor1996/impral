@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<body>
+	<style>
+		* { font-family: monospace; white-space: pre; box-sizing: border-box }
+		body { background: #111; color: white }
+		body > .expression { padding: 0.5rem; }
+		
+		tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.125) }
+		div > code {font-size: 0.75rem; color: grey; padding: 3px}
+		span { display: inline-block; border-radius: 3px }
+		
+		.expression { color: white; padding: 1px 3px; border: 0.5px solid transparent }
+		.expression:hover {border-color: rgba(255, 255, 255, 0.25) }
+		.expression > .literal { background: rgba(255, 255, 255, 0.125); color: limegreen }
+		.expression > .pipe    { background: rgba(64, 64, 255, 0.25);    color: white; padding: 2px }
+		.expression > .invoke  { background: rgba(127, 127, 127, 0.25);  color: white; padding: 2px }
+		.expression > .method  { background: rgba(127, 64, 64, 0.25);  color: white; padding: 2px }
+		.expression > .field  { background: rgba(127, 127, 64, 0.25);  color: white; padding: 2px }
+		.expression > .index  { background: rgba(127, 127, 64, 0.25);  color: white; padding: 2px }
+		
+		.literal { color: limegreen }
+		.literal.str { background: rgba(255, 255, 255, 0.125); color: palegreen }
+		.invoke > .name { color: orangered }
+		.invoke > .key  { color: #e5191c }
+		.invoke > .key-val > .key { color: #e5191c }
+		.member { color: gold }
+		.separator, .operator { color: goldenrod; font-weight: bold; }
+		.filter { color: gold }
+		.obj-idx ,
+		.obj-uid ,
+		.obj-key { color: skyblue !important }
+		
+		.source > .expression,
+		.target > .expression,
+		.val    > .expression { padding:0 }
+	</style>

@@ -6,6 +6,10 @@ use super::*;
 fn sizes() {
     use std::mem::size_of;
     
+    // eprintln!("SizeOf Vec<Expression>  = {}", size_of::<Vec<Expression>>());
+    // eprintln!("SizeOf Vec<Range<...>>  = {}", size_of::<Vec<std::ops::Range<usize>>>());
+    // eprintln!("SizeOf Vec<Literal>     = {}", size_of::<Vec<Literal>>());
+    
     eprintln!("SizeOf µSTR  = {}", size_of::<CompactString>());
     eprintln!("SizeOf [Byt] = {}", size_of::<Vec<Byt>>());
     eprintln!("SizeOf ->Byt = {}", size_of::<Box<Byt>>());
@@ -170,12 +174,58 @@ fn parse() -> Result<(), ParseError> {
 }
 
 #[test]
+fn parse_into_html() -> Result<(), ParseError> {
+    use std::fmt::*;
+    use crate::parser::fmt_html::BlockHtmlPrinter;
+    let mut out = String::from(include_str!("./ast/head.html"));
+    
+    for src in SRC {
+        for line in src.lines()
+            .filter(|l| !l.is_empty())
+            .filter(|l| !l.starts_with("//"))
+        {
+            match chk(line) {
+                Ok(expr) => match BlockHtmlPrinter::from(&expr).to_string() {
+                    Ok(html) => writeln!(&mut out, "<div><code>{}</code><br>{}</div>", line, html).unwrap(),
+                    Err(err) => writeln!(&mut out, "<div><code>{}</code><br><pre>{:?}</pre></div>", line, err).unwrap(),
+                },
+                Err(err) => writeln!(&mut out, "<div><code>{}</code><br><pre>{:?}</pre></div>", line, err).unwrap(),
+            }
+        }
+        
+        writeln!(&mut out, "<hr>").unwrap();
+    }
+    
+    use strum::IntoEnumIterator;
+    writeln!(&mut out, "<h2>Symbols</h2>").unwrap();
+    writeln!(&mut out, "<table>").unwrap();
+    writeln!(&mut out, "<tr><th>Name</th><th>Symbol</th><th>Attributes</th></tr>").unwrap();
+    for sym in Symbol::iter() {
+        let symtxt: SymbolName = sym.into();
+        writeln!(&mut out, "<tr>").unwrap();
+        writeln!(&mut out, "<td>{symtxt}&nbsp;</td>").unwrap();
+        writeln!(&mut out, "<td><code>{sym}</code></td>").unwrap();
+        write!(&mut out, "<td><code>").unwrap();
+        if sym.is_operator() { write!(&mut out, "op ").unwrap() }
+        if sym.is_arrow() { write!(&mut out, "arrow ").unwrap() }
+        if sym.is_postop().is_some() { write!(&mut out, "postop ").unwrap() }
+        if sym.is_delimiter() { write!(&mut out, "delim ").unwrap() }
+        writeln!(&mut out, "</code></td>").unwrap();
+        writeln!(&mut out, "</tr>").unwrap();
+    }
+    writeln!(&mut out, "</table>").unwrap();
+    
+    std::fs::write("parser-tests.html", out.as_bytes()).unwrap();
+    Ok(())
+}
+
+#[test]
 #[should_panic]
 fn posarg_after_nomarg() {
     chk("test 1 a=2 3 b=4").expect("positional arguments cannot be written after nominal arguments");
 }
 
-fn chk(input: &str) -> Result<Expression, ParseError> {
+fn chk(input: &str) -> Result<Block, ParseError> {
     let mut stream = tokenize(input);
     let mut stream = groupenize(&mut stream, None);
     
@@ -187,7 +237,9 @@ fn chk(input: &str) -> Result<Expression, ParseError> {
         true
     );
     
-    let output = match output {
+    //parser.block.entry = output;
+    
+    match output {
         Ok(o) => o,
         Err(err) => {
             println!("Failed to parse: {input}");
@@ -202,10 +254,10 @@ fn chk(input: &str) -> Result<Expression, ParseError> {
         },
     };
     
-    eprintln!("INPUT:  {},\t PARSED:  {:?}", input, output);
+    eprintln!("INPUT:  {},\t PARSED:  {:?}", input, parser.block);
     //eprintln!("<div><code>{}</code><br>{}</div>", input, output.to_html());
     
-    Ok(output)
+    Ok(parser.block)
 }
 
 fn chks(input: impl Iterator<Item=&'static str>) -> Result<(), ParseError> {

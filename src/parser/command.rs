@@ -28,7 +28,7 @@ pub fn parse_command(
     parser: &mut Parser,
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     terminator: Option<Symbol>
-) -> Result<FnCall, ParseError> {
+) -> Result<BlockRef, ParseError> {
     let name = match tokens.next() {
         Some(n) => n,
         None => return Err(ParseError::ExpectButEnd("a command name")),
@@ -46,7 +46,7 @@ pub fn parse_command_body(
     name: CompactString,
     tokens: &mut PeekableTokenStream<impl TokenStream>,
     terminator: Option<Symbol>
-) -> Result<FnCall, ParseError> {
+) -> Result<BlockRef, ParseError> {
     let mut cmd = FnCall {
         name,
         pos_args: Default::default(),
@@ -68,16 +68,16 @@ pub fn parse_command_body(
             break; // natural end of command, due to semicolon
         }
         
-        if match_if(tokens, |t| match t {
-            TokenContent::Symbol(s) if s.is_arrow() => true, _ => false
-        }) {
+        if match_if(tokens, |t|
+            matches!(t, TokenContent::Symbol(s) if s.is_arrow())
+        ) {
             // We MATCH, but NOT drop, the arrow...
             break; // natural end of command, due to arrow
         }
         
         if consume_symbol(tokens, Symbol::DoubleDot) {
             let subcommand = parse_command(parser, tokens, None)?;
-            cmd.pos_args.push(subcommand.into());
+            cmd.pos_args.push(subcommand);
             break; // natural end of command, due to subcommand
         }
         
@@ -88,10 +88,10 @@ pub fn parse_command_body(
                 nom_args: Default::default(),
             });
             
-            cmd.pos_args.push(previous.into());
+            cmd.pos_args.push(parser.block.emplace(previous.into(), 0..usize::MAX));
             
             let subcommand = parse_command(parser, tokens, None)?;
-            cmd.pos_args.push(subcommand.into());
+            cmd.pos_args.push(subcommand);
             break; // natural end of command, due to IF-THEN wrapper command
         }
         
@@ -102,10 +102,10 @@ pub fn parse_command_body(
                 nom_args: Default::default(),
             });
             
-            cmd.pos_args.push(previous.into());
+            cmd.pos_args.push(parser.block.emplace(previous.into(), 0..usize::MAX));
             
             let subcommand = parse_command(parser, tokens, None)?;
-            cmd.pos_args.push(subcommand.into());
+            cmd.pos_args.push(subcommand);
             break; // natural end of command, due to IF-ELSE wrapper command
         }
         
@@ -121,7 +121,8 @@ pub fn parse_command_body(
         
         if consume_symbol(tokens, Symbol::Dash) {
             if let Some(s) = consume_string(tokens) {
-                cmd.nom_args.insert(s, Expression::Value(Literal::Bool(false)));
+                let br = parser.block.emplace(Expression::Value(Literal::Bool(false)), 0..usize::MAX);
+                cmd.nom_args.insert(s, br);
                 no_more_pos_args = true;
                 continue;
             } else {
@@ -131,7 +132,8 @@ pub fn parse_command_body(
         
         if consume_symbol(tokens, Symbol::Plus) {
             if let Some(s) = consume_string(tokens) {
-                cmd.nom_args.insert(s, Expression::Value(Literal::Bool(true)));
+                let br = parser.block.emplace(Expression::Value(Literal::Bool(true)), 0..usize::MAX);
+                cmd.nom_args.insert(s, br);
                 no_more_pos_args = true;
                 continue;
             } else {
@@ -149,12 +151,12 @@ pub fn parse_command_body(
             
             if consume_symbol(tokens, Symbol::EqualSign) {
                 // (l)expr into key
-                let lexpr = match expr {
+                let lexpr = match parser.block.get_mut(expr) {
                     Expression::Value(val) => match val {
-                        Literal::Str(s) => s,
+                        Literal::Str(s) => s.to_owned(),
                         val => return Err(ParseError::ExpectButGot("a parameter name".into(), format!("{:?}", val).into())),
                     },
-                    _ => return Err(ParseError::ExpectButGot("a parameter name".into(), format!("{expr:?}").into())),
+                    expr => return Err(ParseError::ExpectButGot("a parameter name".into(), format!("{expr:?}").into())),
                 };
                 
                 // parse value
@@ -175,5 +177,5 @@ pub fn parse_command_body(
         }
     }
     
-    Ok(cmd)
+    Ok(parser.block.emplace(Expression::FnCall(cmd.into()), 0..usize::MAX))
 }

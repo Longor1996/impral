@@ -5,7 +5,7 @@ use std::borrow::Cow;
 use smartstring::alias::CompactString;
 
 /// A literal / value.
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 #[repr(u8)]
 pub enum Literal {
     /// Nothing
@@ -54,8 +54,31 @@ pub enum Literal {
     ObjKey(CompactString)
 }
 
+impl std::cmp::PartialEq for Literal {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Nil, Self::Nil) => true,
+            (Self::Bool(l), Self::Bool(r)) => l == r,
+            (Self::Int(l), Self::Int(r)) => l == r,
+            (Self::Dec(l), Self::Dec(r)) => l.to_bits() == r.to_bits(),
+            (Self::Uid(l), Self::Uid(r)) => l == r,
+            (Self::Str(l), Self::Str(r)) => l == r,
+            (Self::Byt(l), Self::Byt(r)) => l == r,
+            (Self::RefRes, Self::RefRes) => true,
+            (Self::RefCtx, Self::RefCtx) => true,
+            (Self::RefVar(l), Self::RefVar(r)) => l == r,
+            (Self::ObjIdx(l), Self::ObjIdx(r)) => l == r,
+            (Self::ObjUid(l), Self::ObjUid(r)) => l == r,
+            (Self::ObjKey(l), Self::ObjKey(r)) => l == r,
+            _ => false
+        }
+    }
+}
+
+impl std::cmp::Eq for Literal {}
+
 /// A possibly-typed buffer of bytes.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Byt {
     /// The type of the data, or an empty string.
     pub kind: CompactString,

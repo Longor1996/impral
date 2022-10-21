@@ -22,6 +22,10 @@ pub enum ParseError {
     #[error("Unexpected {0}")]
     Unexpected(Cow<'static, str>),
     
+    /// The token stream ends with a remainder.
+    #[error("Lexer failure at {0}")]
+    LexerError(usize),
+    
     /// Expected one thing, but got another.
     #[error("Expected {0}, but got {1}")]
     ExpectButGot(Cow<'static, str>, Cow<'static, str>),

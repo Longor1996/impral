@@ -25,7 +25,7 @@ pub fn parse_list(
         let expr = parse_expression(parser, tokens, false, true)?;
         list.push(expr);
     }
-
+    
     Ok(list)
 }
 
@@ -33,7 +33,7 @@ pub fn parse_list(
 pub fn parse_map(
     parser: &mut Parser,
     tokens: &mut PeekableTokenStream<impl TokenStream>
-) -> Result<FxHashMap<CompactString, Expression>, ParseError> {
+) -> Result<FxHashMap<CompactString, BlockRef>, ParseError> {
     let mut map = FxHashMap::default();
     
     loop {

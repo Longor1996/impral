@@ -29,3 +29,7 @@ nanval = "0.2.0"
 #version = "0.1.1"
 #default-features = false
 #features = ["57bits"]
+
+[features]
+default = ["html_fmt"]
+html_fmt = []
