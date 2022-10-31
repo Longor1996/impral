@@ -23,6 +23,10 @@ pub fn parse_expression(
     
     // Postfix operator parsing...
     loop {
+        if tokens.peek().is_none() {
+            break
+        }
+        
         // Dot? Field or Index!
         if consume_symbol(tokens, Symbol::Dot) {
             // Braket? Index!
