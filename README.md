@@ -16,6 +16,7 @@ A very basic overview:
 - Basic language similar to LISP/Scheme.
 - Mostly safe ~~and panic-free~~ parser.
 - Conversion to an AST happens only once.
+- AST is linearized; no tree visitor here!
 - A small-ish set of literal types...
   - `_`
   - `null`
@@ -35,8 +36,6 @@ A very basic overview:
   - Context reference: `$$`
   - Local references: `$my-ref`
   - Global references: `@my-ref`
-  - `A && B`: `B` only runs if `A` succeeds.
-  - `A || B`: `B` only runs if `A` fails.
 - Operators!
   - Arithmetic (`+ - * / **`)
   - Equality (`== != < > <= >=`)
@@ -58,6 +57,9 @@ A very basic overview:
 - Fallible operations!
   - Any expression followed by `?` gets unwrapped to the default value.
   - Any expression followed by `?!` will throw an error.
+- Conditional operations!
+  - `A && B`: `B` only runs if `A` succeeds.
+  - `A || B`: `B` only runs if `A` fails.
 - Positional parameters: `foo _ _`
 - Named parameters: `foo bar=_ baz=_`
 - Subexpressions, enclosed by `(…)`
@@ -67,7 +69,5 @@ A very basic overview:
 
 ## TODO
 
-- [ ] Pratt Parsing with `= …`: https://lib.rs/crates/pratt
-- [ ] Numbers with Units
 - [ ] Validation
 - [ ] Interpreter
