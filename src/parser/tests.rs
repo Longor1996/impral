@@ -166,7 +166,8 @@ fn parse_examples() -> Result<(), ParseError> {
 }
 
 #[test]
-fn parse() -> Result<(), ParseError> {
+#[ignore = "tests all example files at once"]
+fn parse_all() -> Result<(), ParseError> {
     for src in SRC {
         chks(src.lines())?;
     }
@@ -174,6 +175,7 @@ fn parse() -> Result<(), ParseError> {
 }
 
 #[test]
+#[ignore = "outputs html file for visual inspection"]
 fn parse_into_html() -> Result<(), ParseError> {
     use std::fmt::*;
     use crate::parser::fmt_html::BlockHtmlPrinter;
