@@ -23,7 +23,7 @@ strum = "0.24.1"
 strum_macros = "0.24.3"
 uuid = "1.2.1"
 
-nanval = "0.2.0"
+#nanval = "0.2.0"
 
 #[dependencies.tagged-box]
 #version = "0.1.1"
