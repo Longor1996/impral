@@ -1,6 +1,6 @@
 //! Token representation.
 
-use super::{Literal, Symbol};
+use super::{Literal, Symbol, Precedence};
 
 /// An individual token.
 #[derive(Debug, Clone)]
@@ -17,11 +17,11 @@ pub struct Token {
 
 impl Token {
     /// Returns the precendence for this token, or 0.
-    pub fn get_precedence(&self) -> u8 {
+    pub fn get_precedence(&self) -> Precedence {
         if let TokenContent::Symbol(symbol) = self.content {
             symbol.get_precedence()
         } else {
-            0
+            Precedence::Null
         }
     }
 }

@@ -14,7 +14,7 @@ pub fn parse_expression(
     parser.depth += 1;
     
     if consume_symbol(tokens, Symbol::EqualSign) {
-        return parse_precedence(parser, tokens, 0)
+        return parse_precedence(parser, tokens, Precedence::Null)
     }
     
     // Try to parse an expression item...
@@ -55,7 +55,7 @@ pub fn parse_expression(
 pub fn parse_precedence(
     parser: &mut Parser,
     tokens: &mut PeekableTokenStream,
-    precedence: u8,
+    precedence: Precedence,
 ) -> Result<BlockRef, ParseError> {
     
     // Try to parse an expression item...
@@ -68,10 +68,10 @@ pub fn parse_infix(
     parser: &mut Parser,
     tokens: &mut PeekableTokenStream,
     mut left: BlockRef,
-    precedence: u8,
+    precedence: Precedence,
 ) -> Result<BlockRef, ParseError> {
     
-    while precedence < tokens.peek().map(|t| t.get_precedence()).unwrap_or(0) {
+    while precedence < tokens.peek().map(|t| t.get_precedence()).unwrap_or(Precedence::Null) {
         
         let next_expr = parse_postfix(parser, tokens, left)?;
         if next_expr != left {

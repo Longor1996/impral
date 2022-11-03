@@ -7,7 +7,7 @@ use strum_macros::{Display, EnumString, EnumIter, EnumDiscriminants, IntoStaticS
 /// A enum of the set of known symbols.
 /// 
 /// **Note:** Symbols can only be a single character or a pair of characters.
-#[derive(Clone, Copy, PartialEq, Eq, Display, EnumString, EnumIter, EnumDiscriminants, IntoStaticStr)]
+#[derive(Hash, Clone, Copy, PartialEq, Eq, Display, EnumString, EnumIter, EnumDiscriminants, IntoStaticStr)]
 #[strum_discriminants(name(SymbolName))]
 #[strum_discriminants(derive(Display))]
 pub enum Symbol {
@@ -301,29 +301,29 @@ impl Symbol {
         }
     }
     
-    /// Returns the precendence for this symbol, or 0.
-    pub fn get_precedence(&self) -> u8 {
+    /// Returns the precendence for this symbol.
+    pub fn get_precedence(&self) -> Precedence {
         match self {
             // ASSIGN => 1,
             // CONDITION => 2,
             
             // SUM
-            Self::Plus | Self::Dash => 3,
+            Self::Plus | Self::Dash => Precedence::Sum,
             
             // PRODUCT
-            Self::Star | Self::Slash | Self::Percentage => 4,
+            Self::Star | Self::Slash | Self::Percentage => Precedence::Product,
             
             // EXPONENT
-            Self::DoubleStar => 5,
+            Self::DoubleStar => Precedence::Exponent,
             
             // PREFIX => 6,
             // POSTFIX => 7,
-            Self::Dot | Self::Range | Self::QuestionMark | Self::Tilde | Self::ThinArrow => 7,
-            _ if self.is_postop().is_some() => 7,
+            Self::Dot | Self::Range | Self::QuestionMark | Self::Tilde | Self::ThinArrow => Precedence::Postfix,
+            _ if self.is_postop().is_some() => Precedence::Postfix,
             
             // CALL & GROUP => 8,
             
-            _ => 0
+            _ => Precedence::Null
         }
     }
 }
@@ -340,4 +340,36 @@ impl std::fmt::Debug for Symbol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, " {} ", self)
     }
+}
+
+/// A enum of the set of possible precedence powers.
+/// 
+/// **Note:** Symbols can only be a single character or a pair of characters.
+#[repr(u8)]
+#[derive(Hash, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Display, EnumString, EnumIter, EnumDiscriminants, IntoStaticStr)]
+#[strum_discriminants(derive(Display))]
+pub enum Precedence {
+    /// No precedence at all.
+    Null = 0,
+    
+    /// Assignment of operands.
+    Assignment = 1,
+    
+    /// Summation of operands.
+    Sum = 3,
+    
+    /// Product of operands.
+    Product = 4,
+    
+    /// Exponent of operands.
+    Exponent = 5,
+    
+    /// Prefix operands.
+    Prefix = 6,
+    
+    /// Postfix operands.
+    Postfix = 7,
+    
+    /// Call operands.
+    Call = 8,
 }
