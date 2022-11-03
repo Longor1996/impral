@@ -3,7 +3,7 @@ use super::*;
 
 /// Match token if...
 pub fn match_if(
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    tokens: &mut PeekableTokenStream,
     predicate: impl FnOnce(&TokenContent) -> bool
 ) -> bool {
     match tokens.peek() {
@@ -14,7 +14,7 @@ pub fn match_if(
 
 /// Consume token if...
 pub fn consume_if(
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    tokens: &mut PeekableTokenStream,
     predicate: impl FnOnce(&TokenContent) -> bool
 ) -> Option<Token> {
     match tokens.peek() {
@@ -32,7 +32,7 @@ pub fn consume_if(
 
 /// Consume string...
 pub fn consume_string(
-    tokens: &mut PeekableTokenStream<impl TokenStream>
+    tokens: &mut PeekableTokenStream
 ) -> Option<CompactString> {
     if let Some(Token {
         content: TokenContent::Literal(Literal::Str(str)), ..
@@ -46,10 +46,10 @@ pub fn consume_string(
 }
 
 /// Consume group...
-pub fn consume_group(
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+pub fn consume_group<'ipit, 'rpit>(
+    tokens: &'ipit mut PeekableTokenStream,
     symbol: Symbol,
-) -> Option<PeekableTokenStream<impl TokenStream>> {
+) -> Option<PeekableTokenStream<'rpit>> {
     if let Some(Token {
         content: TokenContent::Group(peeked, _), ..
     }) = tokens.peek() {
@@ -61,7 +61,8 @@ pub fn consume_group(
             = tokens.next().unwrap().content
         {
             use peekmore::PeekMore;
-            return Some(tokens.into_iter().peekmore())
+            let tokens: Box<dyn TokenStream> = Box::new(tokens.into_iter());
+            return Some(tokens.peekmore())
         }
     };
     
@@ -70,7 +71,7 @@ pub fn consume_group(
 
 /// Match a symbol.
 pub fn match_symbol(
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    tokens: &mut PeekableTokenStream,
     symbol: Symbol,
 ) -> bool {
     match_if(tokens, |tc|
@@ -80,7 +81,7 @@ pub fn match_symbol(
 
 /// Consume a symbol.
 pub fn consume_symbol(
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    tokens: &mut PeekableTokenStream,
     symbol: Symbol,
 ) -> bool {
     consume_if(tokens, |tc|

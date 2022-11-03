@@ -7,7 +7,7 @@ use super::*;
 /// Parses a `TokenStream` into an AST.
 pub fn parse_expression(
     parser: &mut Parser,
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    tokens: &mut PeekableTokenStream,
     start_cmd: bool,
     start_pipe: bool
 ) -> Result<BlockRef, ParseError> {
@@ -54,7 +54,7 @@ pub fn parse_expression(
 /// Parses precedence-based expressions from a `TokenStream`.
 pub fn parse_precedence(
     parser: &mut Parser,
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    tokens: &mut PeekableTokenStream,
     precedence: u8,
 ) -> Result<BlockRef, ParseError> {
     
@@ -66,7 +66,7 @@ pub fn parse_precedence(
 /// Parses precedence-based expressions from a `TokenStream`.
 pub fn parse_infix(
     parser: &mut Parser,
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    tokens: &mut PeekableTokenStream,
     mut left: BlockRef,
     precedence: u8,
 ) -> Result<BlockRef, ParseError> {
@@ -104,7 +104,7 @@ pub fn parse_infix(
 /// Parses postifx expressions from a `TokenStream`.
 pub fn parse_postfix(
     parser: &mut Parser,
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    tokens: &mut PeekableTokenStream,
     mut expr: BlockRef
 ) -> Result<BlockRef, ParseError> {
         
@@ -235,7 +235,7 @@ pub fn parse_postfix(
 /// Parses a `TokenStream` into a pipe.
 pub fn parse_pipe(
     parser: &mut Parser,
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    tokens: &mut PeekableTokenStream,
     expr: BlockRef
 ) -> Result<BlockRef, ParseError> {
     let mut pipe = Box::new(Pipe {
@@ -288,7 +288,7 @@ pub fn parse_pipe(
 /// Parses a `TokenStream` into an item (piece of an expression).
 pub fn parse_item(
     parser: &mut Parser,
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    tokens: &mut PeekableTokenStream,
     start_cmd: bool
 ) -> Result<BlockRef, ParseError> {
     // Fetch the next token...
@@ -326,10 +326,14 @@ pub fn parse_item(
     
     // A group? Parse a subset!
     if let TokenContent::Group(kind, subtokens) = token.content {
+        let subtokens = subtokens.into_iter();
+        let subtokens: Box<dyn TokenStream> = Box::new(subtokens);
+        let mut subtokens = subtokens.peekmore();
+        
         return Ok(match kind {
             Symbol::ParenLeft => parse_expression(
                 parser,
-                &mut subtokens.into_iter().peekmore(),
+                &mut subtokens,
                 true,
                 true
             )?,
@@ -337,7 +341,7 @@ pub fn parse_item(
             Symbol::BraketLeft => {
                 let list = parse_list(
                     parser,
-                    &mut subtokens.into_iter().peekmore()
+                    &mut subtokens,
                 ).map(|l| Expression::FnCall(Box::new(FnCall {
                     name: "list".into(),
                     pos_args: l,
@@ -349,7 +353,7 @@ pub fn parse_item(
             Symbol::CurlyLeft => {
                 let dict = parse_map(
                     parser,
-                    &mut subtokens.into_iter().peekmore()
+                    &mut subtokens,
                 ).map(|d| Expression::FnCall(Box::new(FnCall {
                     name: "dict".into(),
                     nom_args: d,
@@ -364,3 +368,4 @@ pub fn parse_item(
     
     Err(ParseError::Unexpected(format!("token content: {:?}", token.content).into()))
 }
+

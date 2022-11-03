@@ -26,7 +26,7 @@ pub fn try_into_command_name(token: &Token) -> Result<smartstring::alias::Compac
 /// Parses the stream of tokens into a command-expression.
 pub fn parse_command(
     parser: &mut Parser,
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    tokens: &mut PeekableTokenStream,
     terminator: Option<Symbol>
 ) -> Result<BlockRef, ParseError> {
     let name = match tokens.next() {
@@ -44,7 +44,7 @@ pub fn parse_command(
 pub fn parse_command_body(
     parser: &mut Parser,
     name: CompactString,
-    tokens: &mut PeekableTokenStream<impl TokenStream>,
+    tokens: &mut PeekableTokenStream,
     terminator: Option<Symbol>
 ) -> Result<BlockRef, ParseError> {
     let mut cmd = FnCall {

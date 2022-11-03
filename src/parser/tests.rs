@@ -235,10 +235,10 @@ fn posarg_after_nomarg() {
     chk("test 1 a=2 3 b=4").expect("positional arguments cannot be written after nominal arguments");
 }
 
-fn chk(input: &str) -> Result<Block, ParseError> {
+fn chk<'input>(input: &'input str) -> Result<Block, ParseError> {
     use peekmore::PeekMore;
     let mut stream = tokenize(input).peekmore();
-    let mut stream = groupenize(&mut stream, None);
+    let mut stream = groupenize(&mut stream, None).peekmore();
     
     let mut parser: Parser = Parser::default();
     let output = parse_expression(

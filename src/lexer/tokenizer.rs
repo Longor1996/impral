@@ -5,7 +5,10 @@ use peekmore::PeekMoreIterator;
 
 /// A peekable stream of tokens.
 #[allow(type_alias_bounds)]
-pub type PeekableTokenStream<TS: TokenStream> = PeekMoreIterator<TS>;
+pub type PeekableTokenStream<'pit> = PeekMoreIterator<BoxedTokenStream<'pit>>;
+
+/// A boxed stream of tokens.
+pub type BoxedTokenStream<'it> = Box<dyn TokenStream + 'it>;
 
 /// A stream of tokens.
 pub trait TokenStream: Iterator<Item = Token> {}
@@ -27,7 +30,7 @@ impl<'i> LinearTokenIter<'i> {
     }
 }
 
-impl Iterator for LinearTokenIter<'_> {
+impl<'i> Iterator for LinearTokenIter<'i> {
     type Item = Token;
     
     fn next(&mut self) -> Option<Self::Item> {
@@ -352,7 +355,7 @@ impl Iterator for LinearTokenIter<'_> {
 /// Creates an iterator of `Token`'s from the given string slice.
 /// 
 /// This does not create `Group`-tokens.
-pub fn tokenize(input: &str) -> LinearTokenIter<'_> {
+pub fn tokenize<'it: 'lti, 'lti>(input: &'it str) -> LinearTokenIter<'lti> {
     LinearTokenIter::new(input)
 }
 

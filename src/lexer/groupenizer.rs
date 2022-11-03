@@ -2,8 +2,8 @@
 use super::*;
 
 /// Find and stack groups from the given stream of tokens.
-pub fn groupenize(tokens: &mut PeekableTokenStream<impl TokenStream>, delimiter: Option<Symbol>) -> PeekableTokenStream<impl TokenStream + '_> {
-    std::iter::from_fn(move || {
+pub fn groupenize<'it>(tokens: &'it mut impl TokenStream, delimiter: Option<Symbol>) -> Box<dyn TokenStream + 'it> {
+    let iter = std::iter::from_fn(move || {
         match tokens.next() {
             Some(Token {
                 content: TokenContent::Symbol(
@@ -39,5 +39,7 @@ pub fn groupenize(tokens: &mut PeekableTokenStream<impl TokenStream>, delimiter:
             // TODO: Check for unmatched delimiters by `if let None = delimiter`
             None => None, // natural end
         }
-    }).peekmore()
+    });
+    
+    Box::new(iter)
 }
