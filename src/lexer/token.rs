@@ -18,10 +18,19 @@ pub struct Token {
 impl Token {
     /// Returns the precendence for this token, or 0.
     pub fn get_precedence(&self) -> Precedence {
-        if let TokenContent::Symbol(symbol) = self.content {
-            symbol.get_precedence()
-        } else {
-            Precedence::Null
+        match self.get_symbol() {
+            Some(s) => s.get_precedence(),
+            None => Precedence::Null,
+        }
+    }
+    
+    /// Returns the symbol, or delimiter, for this token.
+    pub fn get_symbol(&self) -> Option<Symbol> {
+        match self.content {
+            TokenContent::Symbol(s) => Some(s),
+            TokenContent::Literal(_) => None,
+            TokenContent::Group(s, _) => Some(s),
+            TokenContent::Remainder(_) => None,
         }
     }
 }
