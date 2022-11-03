@@ -236,7 +236,8 @@ fn posarg_after_nomarg() {
 }
 
 fn chk(input: &str) -> Result<Block, ParseError> {
-    let mut stream = tokenize(input);
+    use peekmore::PeekMore;
+    let mut stream = tokenize(input).peekmore();
     let mut stream = groupenize(&mut stream, None);
     
     let mut parser: Parser = Parser::default();
@@ -254,7 +255,7 @@ fn chk(input: &str) -> Result<Block, ParseError> {
         Err(err) => {
             println!("Failed to parse: {input}");
             println!("Because: {err}");
-            println!("Tokens: {:?}", groupenize(&mut tokenize(input), None).collect::<Vec<_>>());
+            println!("Tokens: {:?}", groupenize(&mut tokenize(input).peekmore(), None).collect::<Vec<_>>());
             
             if let Some(token) = stream.peek() {
                 println!("Next token: {token}");

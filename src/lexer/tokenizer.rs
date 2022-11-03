@@ -11,18 +11,29 @@ pub type PeekableTokenStream<TS: TokenStream> = PeekMoreIterator<TS>;
 pub trait TokenStream: Iterator<Item = Token> {}
 impl<T> TokenStream for T where T: Iterator<Item = Token> {}
 
-/// Creates an iterator of `Token`'s from the given string slice.
-/// 
-/// This does not create `Group`-tokens.
-pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
+/// A [`Iterator`] of plain/linear [`Token`]s from some input [`str`].
+pub struct LinearTokenIter<'i> {
+    source: PeekMoreIterator<PosIter<'i>>,
+    symbuf: [u8; 2 * std::mem::size_of::<char>()],
+}
+
+impl<'i> LinearTokenIter<'i> {
+    /// Creates a new stream of plain/linear tokens.
+    pub fn new(source: &'i str) -> Self {
+        Self {
+            source: PosIter::from(source.char_indices()).peekmore(),
+            symbuf: [0; std::mem::size_of::<char>() * 2]
+        }
+    }
+}
+
+impl Iterator for LinearTokenIter<'_> {
+    type Item = Token;
     
-    let mut input = PosIter::from(input.char_indices()).peekmore();
-    let mut encode = [0; std::mem::size_of::<char>() * 2];
-    
-    std::iter::from_fn(move || {
+    fn next(&mut self) -> Option<Self::Item> {
         // Skip any and all whitespace...
         let current = loop {
-            match input.next() {
+            match self.source.next() {
                 Some(current) => if current.is_whitespace() {
                     // keep going
                 } else {
@@ -37,20 +48,20 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         
         // Turn both the current char and the current with the next char into string slices.
         let (currstr, peekstr) = {
-            let cl0 = current.encode_utf8(&mut encode).len();
-            let cl1 = input.peek()
+            let cl0 = current.encode_utf8(&mut self.symbuf).len();
+            let cl1 = self.source.peek()
                 .map(|c|c.char)
                 .unwrap_or(' ')
-                .encode_utf8(&mut encode[cl0..]).len();
+                .encode_utf8(&mut self.symbuf[cl0..]).len();
             (
-                std::str::from_utf8(&encode[..(cl0)]).unwrap(),
-                std::str::from_utf8(&encode[..(cl0+cl1)]).unwrap()
+                std::str::from_utf8(&self.symbuf[..(cl0)]).unwrap(),
+                std::str::from_utf8(&self.symbuf[..(cl0+cl1)]).unwrap()
             )
         };
         
         // Check for symbol pairings...
         if let Ok(symbol) = peekstr.parse::<Symbol>() {
-            input.next(); // drop the paired char
+            self.source.next(); // drop the paired char
             
             if symbol == Symbol::DoubleDollar {
                 // Context Reference
@@ -68,32 +79,32 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                 // TODO: Parse Object Reference (ID)
                 // (requires integer lexing to be extracted)
                 
-                if let Some((start, end, uuid)) = try_lex_uuid(&mut input, current.idx) {
+                if let Some((start, end, uuid)) = try_lex_uuid(&mut self.source, current.idx) {
                     return Some((start, end, Literal::ObjUid(uuid)).into());
                 }
                 
                 // Parse Object Key Reference
-                if let Some(PosChar { char, .. }) = input.peek().cloned() {
+                if let Some(PosChar { char, .. }) = self.source.peek().cloned() {
                     // Check for start of bareword...
                     if is_bareword_start(char) {
-                        input.next(); // drop start
+                        self.source.next(); // drop start
                         let (start, end, bareword)
-                            = try_lex_bareword(&mut input, index, char);
+                            = try_lex_bareword(&mut self.source, index, char);
                         
                         return Some((start, end, Literal::ObjKey(bareword)).into());
                     }
                     
                     // Check for start of double-quoted string...
                     if char == '"' {
-                        input.next(); // drop start
-                        let (start, end, string) = try_lex_string(&mut input, index, char, '"');
+                        self.source.next(); // drop start
+                        let (start, end, string) = try_lex_string(&mut self.source, index, char, '"');
                         return Some((start, end, Literal::ObjKey(string)).into());
                     }
                     
                     // Check for start of single-quoted string...
                     if char == '\'' {
-                        input.next(); // drop start
-                        let (start, end, string) = try_lex_string(&mut input, index, char, '\'');
+                        self.source.next(); // drop start
+                        let (start, end, string) = try_lex_string(&mut self.source, index, char, '\'');
                         return Some((start, end, Literal::ObjKey(string)).into());
                     }
                 }
@@ -103,12 +114,12 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             
             if symbol == Symbol::DollarSign {
                 // Parse Local Reference
-                if let Some(PosChar { char, .. }) = input.peek().cloned() {
+                if let Some(PosChar { char, .. }) = self.source.peek().cloned() {
                     // Check for start of bareword...
                     if is_bareword_start(char) {
-                        input.next(); // drop start
+                        self.source.next(); // drop start
                         let (start, end, bareword)
-                            = try_lex_bareword(&mut input, index, char);
+                            = try_lex_bareword(&mut self.source, index, char);
                         
                         return Some((start, end, Literal::RefVar(bareword)).into());
                     }
@@ -127,14 +138,14 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         
         // Check for start of UUID...
         if *current == 'U' {
-            if let Some((start, end, uuid)) = try_lex_uuid(&mut input, current.idx) {
+            if let Some((start, end, uuid)) = try_lex_uuid(&mut self.source, current.idx) {
                 return Some((start, end, Literal::Uid(uuid)).into());
             }
         }
         
         // Check for start of bareword...
         if is_bareword_start(*current) {
-            let (start, end, bareword) = try_lex_bareword(&mut input, index, *current);
+            let (start, end, bareword) = try_lex_bareword(&mut self.source, index, *current);
             
             return Some((start, end,
                 try_into_constant(bareword.as_str()).unwrap_or(Literal::Str(bareword))
@@ -143,20 +154,20 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
         
         // Check for start of double-quoted string...
         if *current == '"' {
-            let (start, end, string) = try_lex_string(&mut input, index, *current, '"');
+            let (start, end, string) = try_lex_string(&mut self.source, index, *current, '"');
             return Some((start, end, Literal::Str(string)).into());
         }
         
         // Check for start of single-quoted string...
         if *current == '\'' {
-            let (start, end, string) = try_lex_string(&mut input, index, *current, '\'');
+            let (start, end, string) = try_lex_string(&mut self.source, index, *current, '\'');
             return Some((start, end, Literal::Str(string)).into());
         }
         
         // NOTE: This is the worst code of this lexer!
         // Check for start of number...
         if current.is_ascii_digit() || *current == '+' || *current == '-' {
-            let peeked = input.peek().copied().map(|c|c.char).unwrap_or('0');
+            let peeked = self.source.peek().copied().map(|c|c.char).unwrap_or('0');
             
             let (current, sign, bsign) = match *current {
                 '-' => {
@@ -164,14 +175,14 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                         return Some((index, index+1, Symbol::Dash).into());
                     }
                     
-                    (input.next().map(|c|c.char).unwrap_or('0'), -1.0f64, true)
+                    (self.source.next().map(|c|c.char).unwrap_or('0'), -1.0f64, true)
                 },
                 '+' => {
                     if !peeked.is_ascii_digit() {
                         return Some((index, index+1, Symbol::Plus).into());
                     }
                     
-                    (input.next().map(|c|c.char).unwrap_or('0'), 1.0f64, true)
+                    (self.source.next().map(|c|c.char).unwrap_or('0'), 1.0f64, true)
                 },
                 _ => (*current, 1.0f64, false)
             };
@@ -183,27 +194,27 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             let mut radix = 10;
             if current == '0' {
                 // Peek the next char and check if it is a RADIX indicator...
-                radix = match input.peek().copied().map(|c|c.char).unwrap_or(' ') {
+                radix = match self.source.peek().copied().map(|c|c.char).unwrap_or(' ') {
                     // If there is a match, eat it and return a different radix...
-                    'x' => {input.next(); 16},
-                    'd' => {input.next(); 10},
-                    'o' => {input.next(); 8},
-                    'b' => {input.next(); 2},
+                    'x' => {self.source.next(); 16},
+                    'd' => {self.source.next(); 10},
+                    'o' => {self.source.next(); 8},
+                    'b' => {self.source.next(); 2},
                     _ => radix
                 };
             }
             
             // TODO: Break numeric array parsing out into a new function.
             if !bsign {
-                if let Some(PosChar { char: '[', .. }) = input.peek().copied() {
+                if let Some(PosChar { char: '[', .. }) = self.source.peek().copied() {
                     // Array of numbers!
-                    input.next(); // eat [
+                    self.source.next(); // eat [
                     let mut array: Vec<Token> = vec![]; // TODO: Make this an i64-vec
                     
                     loop {
-                        if let Some(PosChar { char: ']', idx: index , .. }) = input.peek().copied() {
+                        if let Some(PosChar { char: ']', idx: index , .. }) = self.source.peek().copied() {
                             last_idx = index;
-                            input.next(); // eat ]
+                            self.source.next(); // eat ]
                             break; // end of array
                         }
                         
@@ -211,26 +222,26 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                         
                         let mut sign = false;
                         
-                        if let Some(PosChar { char: '-', .. }) = input.peek().copied() {
+                        if let Some(PosChar { char: '-', .. }) = self.source.peek().copied() {
                             sign = true;
-                            input.next();
-                        } else if let Some(PosChar { char: '+', .. }) = input.peek().copied() {
+                            self.source.next();
+                        } else if let Some(PosChar { char: '+', .. }) = self.source.peek().copied() {
                             sign = false;
-                            input.next();
+                            self.source.next();
                         }
                         
                         // Eat all the INTEGER digits...
-                        while let Some(PosChar { char: peeked, idx: index , .. }) = input.peek().copied() {
+                        while let Some(PosChar { char: peeked, idx: index , .. }) = self.source.peek().copied() {
                             if peeked == ']' { break }
                             last_idx = index;
                             
                             if ! is_digit_valid(peeked, radix) {
-                                input.next(); // eat unknown
+                                self.source.next(); // eat unknown
                                 break
                             }
                             
                             buffer.push(peeked);
-                            input.next(); // eat digit
+                            self.source.next(); // eat digit
                         }
                         
                         if buffer.is_empty() {
@@ -254,13 +265,13 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             }
             
             // Eat all the INTEGER digits...
-            while let Some(PosChar { char: peeked, .. }) = input.peek().copied() {
+            while let Some(PosChar { char: peeked, .. }) = self.source.peek().copied() {
                 if ! is_digit_valid(peeked, radix) {
                     break
                 }
                 
                 buffer.push(peeked);
-                input.next(); // eat digit
+                self.source.next(); // eat digit
             }
             
             let integer = match i64::from_str_radix(&buffer, radix) {
@@ -269,23 +280,23 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             };
             
             let decimal = if radix == 10
-                && '.' == input.peek_nth(0).copied().map(|c|c.char).unwrap_or(' ')
+                && '.' == self.source.peek_nth(0).copied().map(|c|c.char).unwrap_or(' ')
                 
                 // This is here so to allow member-access on numbers.
-                && input.peek_nth(1).copied().map(|c|c.char).unwrap_or(' ').is_ascii_digit()
+                && self.source.peek_nth(1).copied().map(|c|c.char).unwrap_or(' ').is_ascii_digit()
                 
                 // This is here so that two dot's in a row, a range, are not eaten.
-                && '.' != input.peek_nth(1).copied().map(|c|c.char).unwrap_or(' ')
+                && '.' != self.source.peek_nth(1).copied().map(|c|c.char).unwrap_or(' ')
             {
                 // Eat all the DECIMALS...
                 buffer.clear(); // reuse the buffer, cuz why not
                 buffer.push_str("0.");
-                input.next(); // eat the `.`
+                self.source.next(); // eat the `.`
                 
-                while let Some(PosChar { char: peeked, .. }) = input.peek().copied() {
+                while let Some(PosChar { char: peeked, .. }) = self.source.peek().copied() {
                     if peeked.is_ascii_digit() {
                         buffer.push(peeked);
-                        input.next(); // eat digit
+                        self.source.next(); // eat digit
                     } else {
                         break;
                     }
@@ -296,20 +307,20 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
                 0f64
             };
             
-            let pow10: f64 = if radix == 10 && 'e' == input.peek().copied().map(|c|c.char).unwrap_or(' ') {
-                input.next(); // eat the `e`
+            let pow10: f64 = if radix == 10 && 'e' == self.source.peek().copied().map(|c|c.char).unwrap_or(' ') {
+                self.source.next(); // eat the `e`
                 
-                let sign = match input.peek().copied().map(|c|c.char).unwrap_or(' ') {
-                    '+' => {input.next(); false}, // eat sign
-                    '-' => {input.next(); true}, // eat sign
+                let sign = match self.source.peek().copied().map(|c|c.char).unwrap_or(' ') {
+                    '+' => {self.source.next(); false}, // eat sign
+                    '-' => {self.source.next(); true}, // eat sign
                     _ => false, // dont eat
                 };
                 
                 buffer.clear(); // reuse the buffer, cuz why not
-                while let Some(PosChar { char: peeked , .. }) = input.peek().copied() {
+                while let Some(PosChar { char: peeked , .. }) = self.source.peek().copied() {
                     if peeked.is_ascii_digit() {
                         buffer.push(peeked);
-                        input.next(); // eat digit
+                        self.source.next(); // eat digit
                     } else {
                         break;
                     }
@@ -333,9 +344,16 @@ pub fn tokenize(input: &str) -> PeekableTokenStream<impl TokenStream + '_> {
             return Some((index, index, Literal::Dec(value)).into());
         }
         
-        let remainder: String = input.clone().map(|p| p.char).collect();
+        let remainder: String = self.source.clone().map(|p| p.char).collect();
         Some((index, index+remainder.len(), TokenContent::Remainder(remainder)).into())
-    }).peekmore()
+    }
+}
+
+/// Creates an iterator of `Token`'s from the given string slice.
+/// 
+/// This does not create `Group`-tokens.
+pub fn tokenize(input: &str) -> LinearTokenIter<'_> {
+    LinearTokenIter::new(input)
 }
 
 fn try_lex_bareword(input: &mut PosInput, start: usize, current: char) -> (usize, usize, CompactString) {
