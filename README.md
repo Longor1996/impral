@@ -63,6 +63,7 @@ A very basic overview:
 - Positional parameters: `foo _ _`
 - Named parameters: `foo bar=_ baz=_`
 - Subexpressions, enclosed by `(…)`
+- Pratt/Infix expressions, via `= …`
 - ...and other small things!
 
 ---

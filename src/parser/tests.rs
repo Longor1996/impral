@@ -30,6 +30,7 @@ const SRC_DICTS: &str = include_str!("./tests/dicts.ifn");
 const SRC_EXAMPLES: &str = include_str!("./tests/examples.ifn");
 const SRC_FIELD: &str = include_str!("./tests/field.ifn");
 const SRC_IFS: &str = include_str!("./tests/ifs.ifn");
+const SRC_INFIX: &str = include_str!("./tests/infix.ifn");
 const SRC_INDEX: &str = include_str!("./tests/index.ifn");
 const SRC_LISTS: &str = include_str!("./tests/lists.ifn");
 const SRC_NUMARS: &str = include_str!("./tests/numars.ifn");
@@ -60,6 +61,7 @@ const SRC: &[&str] = &[
     SRC_PARAMS,
     SRC_PIPES,
     SRC_IFS,
+    SRC_INFIX,
     SRC_EXAMPLES,
 ];
 
@@ -156,6 +158,12 @@ fn parse_pipes() -> Result<(), ParseError> {
 #[test]
 fn parse_ifs() -> Result<(), ParseError> {
     chks(SRC_IFS.lines())?;
+    Ok(())
+}
+
+#[test]
+fn parse_infix() -> Result<(), ParseError> {
+    chks(SRC_INFIX.lines())?;
     Ok(())
 }
 

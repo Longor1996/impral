@@ -232,6 +232,18 @@ impl Symbol {
     }
     
     /// Is the symbol a postfix operator?
+    pub fn is_infix_operator(&self) -> bool {
+        matches! {self
+            , Self::Plus
+            | Self::Dash
+            | Self::Star
+            | Self::Slash
+            | Self::Percentage
+            | Self::DoubleStar
+        }
+    }
+    
+    /// Is the symbol a postfix operator?
     pub fn is_postop(&self) -> Option<&'static str> {
         match self {
             Self::Percentage => Some("into_percent"),
@@ -286,6 +298,32 @@ impl Symbol {
             Self::CurlyLeft => Some(Self::CurlyRight),
             Self::AngleLeft => Some(Self::AngleRight),
             _ => None
+        }
+    }
+    
+    /// Returns the precendence for this symbol, or 0.
+    pub fn get_precedence(&self) -> u8 {
+        match self {
+            // ASSIGN => 1,
+            // CONDITION => 2,
+            
+            // SUM
+            Self::Plus | Self::Dash => 3,
+            
+            // PRODUCT
+            Self::Star | Self::Slash | Self::Percentage => 4,
+            
+            // EXPONENT
+            Self::DoubleStar => 5,
+            
+            // PREFIX => 6,
+            // POSTFIX => 7,
+            Self::Dot | Self::Range | Self::QuestionMark | Self::Tilde | Self::ThinArrow => 7,
+            _ if self.is_postop().is_some() => 7,
+            
+            // CALL & GROUP => 8,
+            
+            _ => 0
         }
     }
 }
