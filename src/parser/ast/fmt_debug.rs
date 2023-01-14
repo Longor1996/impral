@@ -74,7 +74,10 @@ impl BlockDebugPrinter<'_> {
                 for seg in &p.stages {
                     write!(f, " |")?; // all segments start with a `|`
                     match seg {
-                        PipeSeg::Collect => {write!(f, "!")?},
+                        PipeSeg::Collect { collector } => {
+                            write!(f, "> ")?;
+                            self.fmt_ref(f, *collector)?;
+                        },
                         PipeSeg::Mapping { mapper } => {
                             write!(f, " ")?;
                             self.fmt_ref(f, *mapper)?;
@@ -87,6 +90,10 @@ impl BlockDebugPrinter<'_> {
                         },
                         PipeSeg::Exclude { predicate } => {
                             write!(f, "? ")?;
+                            self.fmt_ref(f, *predicate)?;
+                        },
+                        PipeSeg::Finding { predicate } => {
+                            write!(f, "?! ")?;
                             self.fmt_ref(f, *predicate)?;
                         },
                     }

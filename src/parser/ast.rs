@@ -159,8 +159,11 @@ pub struct Pipe {
 /// A segment of a pipe.
 #[derive(Clone, PartialEq, Eq)]
 pub enum PipeSeg {
-    /// Collect the pipe into a data-structure, possibly depending on the receiver expression.
-    Collect,
+    /// Collect the pipe into a data-structure, depending on the receiver expression.
+    Collect {
+        /// An expression with a `$`-val in it, hopefully.
+        collector: BlockRef,
+    },
     
     /// A thing goes in, a(nother) thing comes out.
     Mapping {
@@ -178,6 +181,12 @@ pub enum PipeSeg {
     
     /// Filtering out elements given a `predicate`.
     Exclude {
+        /// An expression that returns a truthy/falsy value.
+        predicate: BlockRef
+    },
+    
+    /// Return the first item for which the given `predicate` is true.
+    Finding {
         /// An expression that returns a truthy/falsy value.
         predicate: BlockRef
     },
@@ -236,10 +245,11 @@ impl std::fmt::Debug for Pipe {
         for seg in &self.stages {
             write!(f, " |")?; // all segments start with a `|`
             match seg {
-                PipeSeg::Collect => write!(f, "!")?,
+                PipeSeg::Collect { collector } => write!(f, "> {collector:?}")?,
                 PipeSeg::Mapping { mapper } => write!(f, " {mapper:?}")?,
                 PipeSeg::Folding { initial, reducer } => write!(f, "! {initial:?} {reducer:?}")?,
                 PipeSeg::Exclude { predicate } => write!(f, "? {predicate:?}")?,
+                PipeSeg::Finding { predicate } => write!(f, "?! {predicate:?}")?,
             }
         }
         write!(f, "")

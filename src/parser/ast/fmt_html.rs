@@ -135,7 +135,12 @@ impl BlockHtmlPrinter<'_> {
                 for seg in pipe.stages.iter() {
                     write!(f, " <span class=separator>|</span>")?;
                     match seg {
-                        PipeSeg::Collect => write!(f, " <span class='operator collect'>!</span>")?,
+                        PipeSeg::Collect { collector } => {
+                            write!(f, "<span class='segment collect'>")?;
+                            write!(f, "<span class='operator collect'>&gt;</span> ")?;
+                            self.fmt_ref(f, *collector, true)?;
+                            write!(f, "</span>")?;
+                        },
                         PipeSeg::Mapping { mapper } => {
                             write!(f, " <span class='segment mapping'>")?;
                             self.fmt_ref(f, *mapper, true)?;
@@ -152,6 +157,12 @@ impl BlockHtmlPrinter<'_> {
                         PipeSeg::Exclude { predicate } => {
                             write!(f, "<span class='segment exclude'>")?;
                             write!(f,  "<span class=operator>?</span> ")?;
+                            self.fmt_ref(f, *predicate, true)?;
+                            write!(f, "</span>")?;
+                        },
+                        PipeSeg::Finding { predicate } => {
+                            write!(f, "<span class='segment finding'>")?;
+                            write!(f,  "<span class=operator>?!</span> ")?;
                             self.fmt_ref(f, *predicate, true)?;
                             write!(f, "</span>")?;
                         },

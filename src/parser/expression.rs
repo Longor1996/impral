@@ -27,6 +27,8 @@ pub fn parse_expression(
         }
         
         let next_expr = parse_postfix(parser, tokens, expr)?;
+        
+        // If parse_postfix returns a new expression, we continue...
         if next_expr != expr {
             expr = next_expr;
             continue;
@@ -35,7 +37,7 @@ pub fn parse_expression(
         // Pipe? Pipe!
         if start_pipe && consume_symbol(tokens, Symbol::Pipe) {
             expr = parse_pipe(parser, tokens, expr)?;
-            return Ok(expr)
+            continue;
         }
         
         break;
@@ -251,22 +253,35 @@ pub fn parse_pipe(
     // };
     
     loop {
+        // `|?`
         let segment = if consume_symbol(tokens, Symbol::QuestionMark) {
-            PipeSeg::Exclude {
-                predicate: parse_expression(parser, tokens, true, false)?,
-            }
-        }
-        else if consume_symbol(tokens, Symbol::ExclamationMark) {
-            if match_symbol(tokens, Symbol::Pipe) || tokens.peek().is_none() {
-                PipeSeg::Collect
-            }
-            else {
-                PipeSeg::Folding {
-                    initial: parse_expression(parser, tokens, true, false)?,
-                    reducer: parse_expression(parser, tokens, true, false)?,
+            if consume_symbol(tokens, Symbol::ExclamationMark) {
+                // `|?!`
+                PipeSeg::Finding {
+                    predicate: parse_expression(parser, tokens, true, false)?,
+                }
+            } else {
+                // `|?`
+                PipeSeg::Exclude {
+                    predicate: parse_expression(parser, tokens, true, false)?,
                 }
             }
         }
+        // `|>`
+        else if consume_symbol(tokens, Symbol::AngleRight) {
+            pipe.stages.push(PipeSeg::Collect {
+                collector: parse_expression(parser, tokens, true, true)?,
+            });
+            break
+        }
+        // `|!`
+        else if consume_symbol(tokens, Symbol::ExclamationMark) {
+            PipeSeg::Folding {
+                initial: parse_expression(parser, tokens, true, false)?,
+                reducer: parse_expression(parser, tokens, true, false)?,
+            }
+        }
+        // `|`
         else {
             PipeSeg::Mapping {
                 mapper: parse_expression(parser, tokens, true, false)?,
