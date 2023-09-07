@@ -30,7 +30,7 @@ Number literals are stored either as [`i64`] or as [`f64`].
 ## Strings
 Any text enclosed in double-quotes! i.e.: `"Hello, World!"`
 
-Thanks to some memory shenanigans (see: [`CompactString`]), strings smaller than 24 bytes don't have to be heap-allocated.
+Thanks to some memory shenanigans (see: [`smartstring::alias::CompactString`]), strings smaller than 24 bytes don't have to be heap-allocated.
 
 ### Barewords
 A bareword is a *unquoted string* that consists entirely of letters,

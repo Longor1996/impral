@@ -183,6 +183,10 @@ pub enum Symbol {
     #[strum(to_string="**")]
     DoubleStar,
     
+    /// `::`
+    #[strum(to_string="::")]
+    QuadDot,
+    
     /// `->`
     #[strum(to_string="->")]
     ThinArrow,
@@ -322,6 +326,10 @@ impl Symbol {
             _ if self.is_postop().is_some() => Precedence::Postfix,
             
             // CALL & GROUP => 8,
+            // Self::ParenLeft => Precedence::Call,
+            // Self::BraketLeft => Precedence::Call,
+            // Self::CurlyLeft => Precedence::Call,
+            // Self::AngleLeft => Precedence::Call,
             
             _ => Precedence::Null
         }

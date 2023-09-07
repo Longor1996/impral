@@ -49,20 +49,27 @@ impl<'i> Iterator for LinearTokenIter<'i> {
         let index = current.idx;
         let mut last_idx = current.idx;
         
-        // Turn both the current char and the current with the next char into string slices.
+        // Turn both the current-char and the current-with-next-char into string slices.
         let (currstr, peekstr) = {
+            // Stuff the current character into the symbol builder buffer, saving it's length...
             let cl0 = current.encode_utf8(&mut self.symbuf).len();
+            
+            // Attempt to fetch the next UTF-8 character,
+            // stuffing it into the symbol builder buffer and saving it's length...
             let cl1 = self.source.peek()
-                .map(|c|c.char)
-                .unwrap_or(' ')
+                .map(|c| c.char)
+                .unwrap_or(' ') // nothing there? use whitespace!
                 .encode_utf8(&mut self.symbuf[cl0..]).len();
-            (
-                std::str::from_utf8(&self.symbuf[..(cl0)]).unwrap(),
-                std::str::from_utf8(&self.symbuf[..(cl0+cl1)]).unwrap()
-            )
+            
+            // We can now safely create two string slices from the symbol builder buffer
+            use std::str::from_utf8_unchecked as futf8u; // smol-ify func name
+            unsafe {(
+                futf8u(&self.symbuf[ ..(cl0) ]),
+                futf8u(&self.symbuf[ ..(cl0 + cl1) ])
+            )}
         };
         
-        // Check for symbol pairings...
+        // Check for wide symbols...
         if let Ok(symbol) = peekstr.parse::<Symbol>() {
             self.source.next(); // drop the paired char
             
@@ -74,7 +81,7 @@ impl<'i> Iterator for LinearTokenIter<'i> {
             return Some((index, index+2, symbol).into());
         }
         
-        // Check for individual symbols...
+        // Check for smol symbols...
         if let Ok(symbol) = currstr.parse::<Symbol>() {
             
             if symbol == Symbol::At { // '@' object references
@@ -454,7 +461,7 @@ fn try_into_constant(str: &str) -> Option<Literal> {
 fn is_digit_valid(peeked: char, radix: u32) -> bool {
     match radix {
         2 if peeked == '0' || peeked == '1' => true,
-        8 if ('0'..='7').contains(&peeked) => true,
+        8 if matches!(peeked, '0'..='7') => true,
         10 if peeked.is_ascii_digit() => true,
         16 if peeked.is_ascii_hexdigit() => true,
         _ => false
